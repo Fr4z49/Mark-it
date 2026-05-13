@@ -16,7 +16,8 @@
     "font-style": "Bold",
     "margin-top":15,
     "line": true,
-    "line-start": 80,
+    "line-start": 15,
+    "line-end": 15,
     "line-thickness": 2,
     "line-color": "#ffffff"
   },
@@ -28,6 +29,7 @@
     "margin-top":30,
     "line": true,
     "line-start": 80,
+    "line-end": 25,
     "line-thickness": 1,
     "line-color": "#ffffff"
   },
@@ -39,6 +41,7 @@
     "margin-top":0,
     "line": false,
     "line-start": 80,
+    "line-end": 15,
     "line-thickness": 1,
     "line-color": "#ffffff"
   },
@@ -52,9 +55,9 @@
     "margin-right": 40
   },
   "quote": {
-    "color": "#f0f6fc",
-    "background":"#1e242a",
-    "line-color": "#ffffff",
+    "color": "#adbac7",
+    "background":"#12161a",
+    "line-color": "#484f58",
     "font-name": "Helvetica",
     "font-size": 14
   },
@@ -74,7 +77,17 @@
     "margin-top": 30,
     "background-pad-y":15,
     "background-pad-x":15
+  },
+  "unordered-list": {
+    "color": "#f0f6fc", 
+    "font-name": "Helvetica",
+    "font-size": 13 ,
+    "interline": 3, 
+    "margin-left": 40,
+    "margin-right": 40,
+    "margin-top": 30,
+    "text-pad-left":10,
+    "bullet-char": "•"
   }
-
 
 }

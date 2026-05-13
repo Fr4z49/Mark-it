@@ -37,6 +37,20 @@ def parse_blockquote(line, line_number):
         "line": line_number
     }
 
+def parse_unordered_list_item(line,line_number):
+    line = line.lstrip()
+    text = line[1:].strip()
+
+    if not line.startswith("-"):
+        return None
+
+    return {
+        "type": "ul_item",
+        "content": parse_inline(text),
+        "line": line_number
+    }
+
+
 def parse_multiline_code(lines, start_index):
 
     line = lines[start_index].strip()
@@ -188,6 +202,13 @@ def parse(lines):
 
         if quote:
             result.append(quote)
+            i += 1
+            continue
+
+        ul = parse_unordered_list_item(line, i)
+
+        if ul:
+            result.append(ul)
             i += 1
             continue
 

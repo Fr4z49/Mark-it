@@ -38,6 +38,7 @@ def get_config(parsed_json):
         "CODE":           parsed_json["inline-code"],
         "BLOCKQUOTE":     parsed_json["quote"],
         "MULTILINE_CODE": parsed_json["multiline-code"],
+        "UL": parsed_json["unordered-list"],
     }
 
 
@@ -168,12 +169,12 @@ def draw_header(c, y, text_input, level, cfg, draw=True,
     if conf.get("line", False):
         c.setLineWidth(conf["line-thickness"])
         c.setStrokeColor(conf["line-color"])
-        line_x_start = 30 if level == 1 else margin_left
+        line_x_start = conf["line-start"] if level == 1 else margin_left
         if draw:
             c.line(
                 line_x_start,
                 y - y_shift - space_between_line,
-                PAGE["page-width"] * mm - 30,
+                PAGE["page-width"] * mm - conf["line-end"],
                 y - y_shift - space_between_line
             )
         return y_shift + space_between_line + 5
@@ -462,6 +463,125 @@ def render_multiline_code(c, x, y, string, font_name, font_size, cfg,
 
     return y - y_cursor + bg_pad_y + margin_top
 
+def render_ul_item(c, x, y, text, font_name, font_size, cfg, draw=True,
+                   margin_left=None, margin_right=None, margin_top=None):
+
+    PAGE = cfg["PAGE"]
+    UL   = cfg["UL"]
+    CODE = cfg["CODE"]
+
+    if margin_left  is None: margin_left  = UL["margin-left"]
+    if margin_right is None: margin_right = UL["margin-right"]
+    if margin_top   is None: margin_top   = UL["margin-top"]
+
+    CODE_PADDING_X = 3
+    CODE_PADDING_Y = 2
+
+    max_width   = PAGE["page-width"] * mm - margin_left - margin_right
+    line_height = get_font_height(font_name, font_size)
+
+    y_cursor = y - margin_top 
+    x_cursor = margin_left
+
+    # --- bullet ---
+    c.setFont(font_name, font_size)
+    if draw:
+        c.drawString(x_cursor, y_cursor, UL["bullet-char"])
+
+    bullet_offset = stringWidth(UL["bullet-char"], font_name, font_size) + UL["text-pad-left"] * px
+    x_cursor += bullet_offset
+    text_start_x = margin_left + bullet_offset  # ← usato da new_line per rientrare correttamente
+
+    def new_line():
+        nonlocal x_cursor, y_cursor
+        y_cursor -= line_height + UL["interline"]
+        x_cursor  = text_start_x  # ← rientra dopo il bullet, non a margin_left
+
+    def draw_text_segment(value, font, color, is_strike=False):
+        nonlocal x_cursor, y_cursor
+
+        words       = value.split(" ")
+        space_width = stringWidth(" ", font, font_size)
+
+        for i, word in enumerate(words):
+            word_width = stringWidth(word, font, font_size)
+
+            if x_cursor + word_width > (margin_left + max_width):
+                new_line()
+
+            c.setFont(font, font_size)
+            c.setFillColor(color)
+
+            if draw:
+                c.drawString(x_cursor, y_cursor, word)
+
+            if is_strike:
+                line_y = y_cursor + font_size * 0.3
+                c.setStrokeColor(color)
+                c.setLineWidth(1)
+                if draw:
+                    c.line(x_cursor, line_y, x_cursor + word_width, line_y)
+
+            x_cursor += word_width
+
+            if i < len(words) - 1 or value.endswith(" "):
+                if x_cursor + space_width > (margin_left + max_width):
+                    new_line()
+                else:
+                    x_cursor += space_width
+
+    def draw_code_segment(value, font, color):
+        nonlocal x_cursor, y_cursor
+
+        text_width = stringWidth(value, font, font_size)
+
+        if x_cursor + text_width > (margin_left + max_width):
+            new_line()
+
+        c.saveState()
+        c.setFillColor(CODE["background"])
+
+        if draw:
+            c.rect(
+                x_cursor - CODE_PADDING_X,
+                y_cursor - CODE_PADDING_Y,
+                text_width + 2 * CODE_PADDING_X,
+                font_size + 2 * CODE_PADDING_Y,
+                fill=1, stroke=0
+            )
+
+        c.restoreState()
+        c.setFont(font, font_size)
+        c.setFillColor(color)
+
+        if draw:
+            c.drawString(x_cursor, y_cursor, value)
+
+        x_cursor += text_width
+
+    for block in text:
+
+        if block["type"] == "newline":
+            new_line()
+            continue
+
+        value = block.get("value", "")  # ← rinominato da "text" a "value"
+        style = block["type"]
+
+        if style == "bold":
+            draw_text_segment(value, UL["font-name"] + "-Bold", UL["color"])
+        elif style == "code":
+            draw_code_segment(value, CODE["font-name"], CODE["color"])
+        elif style == "strikethru":
+            draw_text_segment(value, UL["font-name"], UL["color"], is_strike=True)
+        else:
+            draw_text_segment(value, font_name, UL["color"])
+
+    return y - y_cursor 
+
+
+
+
 
 # =========================================================
 # RENDER
@@ -473,22 +593,29 @@ def render(c, parsed_file, cfg, draw=False, page_height=10000):
     TEXT       = cfg["TEXT"]
     BLOCKQUOTE = cfg["BLOCKQUOTE"]
     MULTILINE_CODE = cfg["MULTILINE_CODE"]
+    UL = cfg["UL"]
 
+    # c.bookmarkPage("root")
+    # c.addOutlineEntry("root", "root", level=0)
     start_y = (page_height * mm) - PAGE["margin-top"]
     y = start_y
-
+    
     if draw:
         background(c, PAGE["background"], PAGE["page-width"], page_height)
 
     for line in parsed_file:
 
         current_line = [line[k] for k in line]
+        print(current_line)
 
         if current_line[0] == "heading":
-            y -= draw_header(
+            y_shift= draw_header(
                 c, y, current_line[2], current_line[1], cfg,
                 draw=draw, margin_top=10 * px
             )
+            c.bookmarkHorizontalAbsolute(current_line[2][0]["value"], y+y_shift)
+            c.addOutlineEntry(current_line[2][0]["value"], current_line[2][0]["value"], level=current_line[1]-1)
+            y-=y_shift
 
         elif current_line[0] == "paragraph":
             y -= render_paragraph(
@@ -506,6 +633,11 @@ def render(c, parsed_file, cfg, draw=False, page_height=10000):
             y -= render_multiline_code(
                 c, 0, y, current_line[1],
                 MULTILINE_CODE["font-name"], MULTILINE_CODE["font-size"], cfg, draw=draw
+            )
+        elif current_line[0] == "ul_item":
+            y -= render_ul_item(
+                c, 0, y, current_line[1],
+                UL["font-name"], UL["font-size"], cfg, draw=draw
             )
 
     used_height_mm = (start_y - y) / mm
