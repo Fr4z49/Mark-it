@@ -1,5 +1,5 @@
 # Parser markdown-like base con inline parsing
-
+import pygments_highlighter
 
 def parse_header(line, line_number):
     line = line.lstrip()
@@ -51,10 +51,10 @@ def parse_unordered_list_item(line,line_number):
     }
 
 
-def parse_multiline_code(lines, start_index):
+def parse_multiline_code(lines, start_index,highlight_style):
 
     line = lines[start_index].strip()
-
+    
     # apertura blocco
     if not line.startswith("```"):
         return None, start_index
@@ -71,13 +71,15 @@ def parse_multiline_code(lines, start_index):
         if current.strip().startswith("```"):
             break
 
-        code_lines.append(current.rstrip("\n"))
+        code_lines.append(current)
 
         i += 1
-
+    
+    colored_lines = pygments_highlighter.main(code_lines,highlight_style)
+    #print(colored_lines)
     return {
         "type": "multiline_code",
-        "content": "\n".join(code_lines),
+        "content": colored_lines,
         "line": start_index + 1
     }, i
 
@@ -158,7 +160,7 @@ def parse_paragraph(line, line_number):
 # MAIN PARSER
 # ----------------------------
 
-def parse(lines):
+def parse(lines, highlight_style):
 
     result = []
 
@@ -176,7 +178,7 @@ def parse(lines):
         # MULTILINE CODE
         # ------------------------
 
-        multiline_code, new_index = parse_multiline_code(lines, i)
+        multiline_code, new_index = parse_multiline_code(lines, i,highlight_style)
 
         if multiline_code:
             result.append(multiline_code)
@@ -226,12 +228,9 @@ def parse(lines):
 # ----------------------------
 # MAIN
 # ----------------------------
-def main(document):
+def main(document,highlight_style):
     file = open(document, "r").read()
     lines = file.split("\n")
 
-    parsed = parse(lines)
+    parsed = parse(lines,highlight_style)
     return parsed
-
-
-

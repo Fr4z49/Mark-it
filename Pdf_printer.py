@@ -420,45 +420,69 @@ def render_paragraph(c, x, y, blocks, font_name, font_size, cfg,
 # MULTILINE CODE
 # =========================================================
 
-def render_multiline_code(c, x, y, string, font_name, font_size, cfg,
+def render_multiline_code(c, x, y, tokens, font_name, font_size, cfg,
                           draw=True, margin_left=None, margin_right=None,
                           margin_top=None):
 
     MULTILINE_CODE = cfg["MULTILINE_CODE"]
     PAGE           = cfg["PAGE"]
 
-    if margin_left  is None: margin_left  = MULTILINE_CODE["margin-left"]
-    if margin_right is None: margin_right = MULTILINE_CODE["margin-right"]
-    if margin_top   is None: margin_top   = MULTILINE_CODE["margin-top"] * px
+    if margin_left  is None:
+        margin_left = MULTILINE_CODE["margin-left"]
 
-    lines        = string.split("\n")
+    if margin_right is None:
+        margin_right = MULTILINE_CODE["margin-right"]
+
+    if margin_top is None:
+        margin_top = MULTILINE_CODE["margin-top"] * px
+
     temp_y_shift = get_font_height(font_name, font_size) + 5
-    bg_pad_y     = MULTILINE_CODE["background-pad-y"] * px
-    text_padx    = MULTILINE_CODE["background-pad-x"] * px
+
+    bg_pad_y  = MULTILINE_CODE["background-pad-y"] * px
+    text_padx = MULTILINE_CODE["background-pad-x"] * px
 
     y_cursor = y - margin_top
     x_cursor = x + margin_left
-    bg_height = (len(lines) * temp_y_shift) + (2 * bg_pad_y)
 
+    bg_height = (len(tokens) * temp_y_shift) + (2 * bg_pad_y)
+
+    # background
     c.setFillColor(MULTILINE_CODE["background"])
+
     c.rect(
         x + margin_left,
         y - bg_height - margin_top,
         PAGE["page-width"] * mm - margin_right - margin_left,
         bg_height,
-        fill=1, stroke=0
+        fill=1,
+        stroke=0
     )
-    c.setFillColor(MULTILINE_CODE["color"])
 
-    c.setFont(font_name,font_size)
+    c.setFont(font_name, font_size)
 
-    for line in lines:
+    for line in tokens:
+
         if draw:
-            c.drawString(
+
+            text_obj = c.beginText()
+
+            text_obj.setTextOrigin(
                 x_cursor + text_padx,
-                y_cursor - bg_pad_y / 2 - margin_top,
-                line
+                y_cursor - bg_pad_y / 2 - margin_top
             )
+
+            text_obj.setFont(font_name, font_size)
+
+            for text, color in line:
+
+                if text == "\n":
+                    continue
+
+                text_obj.setFillColor(color)
+                text_obj.textOut(text)
+
+            c.drawText(text_obj)
+
         y_cursor -= temp_y_shift
 
     return y - y_cursor + bg_pad_y + margin_top
@@ -581,8 +605,6 @@ def render_ul_item(c, x, y, text, font_name, font_size, cfg, draw=True,
 
 
 
-
-
 # =========================================================
 # RENDER
 # =========================================================
@@ -606,7 +628,8 @@ def render(c, parsed_file, cfg, draw=False, page_height=10000):
     for line in parsed_file:
 
         current_line = [line[k] for k in line]
-        print(current_line)
+        #### Debug print parsed lines
+        #print(current_line)
 
         if current_line[0] == "heading":
             y_shift= draw_header(
@@ -639,6 +662,7 @@ def render(c, parsed_file, cfg, draw=False, page_height=10000):
                 c, 0, y, current_line[1],
                 UL["font-name"], UL["font-size"], cfg, draw=draw
             )
+       
 
     used_height_mm = (start_y - y) / mm
 
@@ -664,13 +688,14 @@ def generate_pdf(input_path, output_path, style_path):
 
     parsed_json = load_style(style_path)
     cfg         = get_config(parsed_json)
-
     PAGE       = cfg["PAGE"]
     PAGE_WIDTH = PAGE["page-width"]
+    HIGHLIGHT_STYLE = cfg["MULTILINE_CODE"]["highlight-style"]
 
     PAGE_HEIGHT_INTERNAL = 10000
 
-    parsed = Parser.main(input_path)
+    parsed = Parser.main(input_path,HIGHLIGHT_STYLE)
+    #print(parsed)
 
     # --------------------------------------------------
     # PASS 1 — misura l'altezza necessaria
