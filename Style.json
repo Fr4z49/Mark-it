@@ -68,7 +68,7 @@
     "font-size": 13
   },
   "multiline-code": {
-    "color": "#f0f6fc",
+    "highlight-style": "github-dark",
     "background": "#151b23", 
     "font-name": "Helvetica",
     "font-size": 13 ,
