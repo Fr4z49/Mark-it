@@ -1,8 +1,7 @@
 # Presentazione Mark-IT:
 
 ## Cos'è mark-it:
-> **mark-it** è un formato di testo simile al markdown che permette di creare un pdf secondo uno stile predefinito.\nQuesto documento è gia stato creato usando Mark-it.
-
+> **mark-it** è un formato di testo simile al markdown che permette di creare un pdf secondo uno stile predefinito.
 ## Header multilivello:
 
 Markit supporta 3 livelli di header e si usano tramite il simbolo '#' con il numero del livello dell'header:
