@@ -390,7 +390,7 @@ def render_paragraph(c, x, y, blocks, font_name, font_size, cfg,
         if draw:
             c.drawString(x_cursor, y_cursor, text)
 
-        x_cursor += text_width
+        x_cursor += text_width + CODE_PADDING_X
 
     for block in blocks:
 
