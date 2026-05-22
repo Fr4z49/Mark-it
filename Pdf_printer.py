@@ -361,7 +361,7 @@ def render_paragraph(c, x, y, blocks, font_name, font_size, cfg,
                 if x_cursor + space_width > (margin_left + max_width):
                     new_line()
                 else:
-                    x_cursor += space_width
+                    x_cursor += space_width + CODE_PADDING_X
 
     def draw_code_segment(text, font, color):
         nonlocal x_cursor, y_cursor
