@@ -557,7 +557,7 @@ def render_ul_item(c, x, y, text, font_name, font_size, cfg, draw=True,
         if draw:
             c.drawString(x_cursor, y_cursor+CODE_PADDING_Y, text)
 
-        x_cursor += text_width
+        x_cursor += text_width + CODE_PADDING_X
 
     for block in text:
 
