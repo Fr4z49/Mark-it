@@ -12,7 +12,7 @@
   "header1": {
     "color":"#c9d1d9",
     "font-name": "Helvetica",
-    "font-size": 24,
+    "font-size": 27,
     "font-style": "Bold",
     "margin-top":15,
     "line": true,
@@ -38,7 +38,7 @@
     "font-name": "Helvetica",
     "font-size": 14,
     "font-style": "Bold",
-    "margin-top":0,
+    "margin-top":30,
     "line": false,
     "line-start": 80,
     "line-end": 15,
@@ -49,7 +49,7 @@
     "color": "#f0f6fc",
     "font-name": "Helvetica",
     "font-size": 12,
-    "interline": 3, 
+    "interline": 3,
     "margin-top": 25,
     "margin-left": 40,
     "margin-right": 40
@@ -65,7 +65,7 @@
     "color": "#f0f6fc",
     "background": "#1e242a",
     "font-name": "Courier",
-    "font-size": 13
+    "font-size": 9
   },
   "multiline-code": {
     "color": "#f0f6fc",

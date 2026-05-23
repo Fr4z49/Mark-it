@@ -361,12 +361,12 @@ def render_paragraph(c, x, y, blocks, font_name, font_size, cfg,
                 if x_cursor + space_width > (margin_left + max_width):
                     new_line()
                 else:
-                    x_cursor += space_width + CODE_PADDING_X
+                    x_cursor += space_width
 
     def draw_code_segment(text, font, color):
         nonlocal x_cursor, y_cursor
 
-        text_width = stringWidth(text, font, font_size)
+        text_width = stringWidth(text, font, CODE["font-size"])
 
         if x_cursor + text_width > (margin_left + max_width):
             new_line()
@@ -379,18 +379,18 @@ def render_paragraph(c, x, y, blocks, font_name, font_size, cfg,
                 x_cursor - CODE_PADDING_X,
                 y_cursor - CODE_PADDING_Y,
                 text_width + 2 * CODE_PADDING_X,
-                font_size + 2 * CODE_PADDING_Y,
+                CODE["font-size"] + 2 * CODE_PADDING_Y,
                 fill=1, stroke=0
             )
 
         c.restoreState()
-        c.setFont(font, font_size)
+        c.setFont(font, CODE["font-size"])
         c.setFillColor(color)
 
         if draw:
-            c.drawString(x_cursor, y_cursor, text)
+            c.drawString(x_cursor, y_cursor+CODE_PADDING_Y, text)
 
-        x_cursor += text_width
+        x_cursor += text_width + CODE_PADDING_X
 
     for block in blocks:
 
@@ -430,15 +430,15 @@ def render_multiline_code(c, x, y, string, font_name, font_size, cfg,
     if margin_left  is None: margin_left  = MULTILINE_CODE["margin-left"]
     if margin_right is None: margin_right = MULTILINE_CODE["margin-right"]
     if margin_top   is None: margin_top   = MULTILINE_CODE["margin-top"] * px
-
+    font_height = get_font_height(font_name, font_size)
     lines        = string.split("\n")
-    temp_y_shift = get_font_height(font_name, font_size) + 5
+    temp_y_shift =  font_height + 5
     bg_pad_y     = MULTILINE_CODE["background-pad-y"] * px
     text_padx    = MULTILINE_CODE["background-pad-x"] * px
 
     y_cursor = y - margin_top
     x_cursor = x + margin_left
-    bg_height = (len(lines) * temp_y_shift) + (2 * bg_pad_y)
+    bg_height = (len(lines) * temp_y_shift) + ( 2* bg_pad_y)
 
     c.setFillColor(MULTILINE_CODE["background"])
     c.rect(
@@ -456,7 +456,7 @@ def render_multiline_code(c, x, y, string, font_name, font_size, cfg,
         if draw:
             c.drawString(
                 x_cursor + text_padx,
-                y_cursor - bg_pad_y / 2 - margin_top,
+                y_cursor - bg_pad_y  - margin_top + font_height,
                 line
             )
         y_cursor -= temp_y_shift
@@ -530,10 +530,10 @@ def render_ul_item(c, x, y, text, font_name, font_size, cfg, draw=True,
                 else:
                     x_cursor += space_width
 
-    def draw_code_segment(value, font, color):
+    def draw_code_segment(text, font, color):
         nonlocal x_cursor, y_cursor
 
-        text_width = stringWidth(value, font, font_size)
+        text_width = stringWidth(text, font, CODE["font-size"])
 
         if x_cursor + text_width > (margin_left + max_width):
             new_line()
@@ -546,16 +546,16 @@ def render_ul_item(c, x, y, text, font_name, font_size, cfg, draw=True,
                 x_cursor - CODE_PADDING_X,
                 y_cursor - CODE_PADDING_Y,
                 text_width + 2 * CODE_PADDING_X,
-                font_size + 2 * CODE_PADDING_Y,
+                CODE["font-size"] + 2 * CODE_PADDING_Y,
                 fill=1, stroke=0
             )
 
         c.restoreState()
-        c.setFont(font, font_size)
+        c.setFont(font, CODE["font-size"])
         c.setFillColor(color)
 
         if draw:
-            c.drawString(x_cursor, y_cursor, value)
+            c.drawString(x_cursor, y_cursor+CODE_PADDING_Y, text)
 
         x_cursor += text_width
 
