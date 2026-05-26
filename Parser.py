@@ -65,14 +65,15 @@ def parse_multiline_code(lines, start_index):
 
     while i < len(lines):
 
-        current = lines[i]
+        current = lines[i].replace("\t", "    ")
+
 
         # chiusura blocco
         if current.strip().startswith("```"):
             break
 
         code_lines.append(current.rstrip("\n"))
-
+    
         i += 1
 
     return {
@@ -91,7 +92,7 @@ def parse_inline(text):
     i = 0
     buffer = ""
     active_type = "text"
-
+    
     while i < len(text):
         char = text[i]
         next_char = text[i + 1] if i + 1 < len(text) else None
@@ -99,6 +100,7 @@ def parse_inline(text):
         # --- AGGIUNTA: Controllo per \n letterale ---
         if char == "\\" and next_char == "n":
             if buffer:
+                buffer = buffer.replace("\t", "   ")
                 result.append({"type": active_type, "value": buffer})
                 buffer = ""
             result.append({"type": "newline", "value": "\n"})
@@ -121,6 +123,7 @@ def parse_inline(text):
 
         if found_tag:
             if buffer:
+                buffer = buffer.replace("\t", "   ")
                 result.append({"type": active_type, "value": buffer})
                 buffer = ""
             active_type = "text" if active_type == found_tag else found_tag
@@ -130,6 +133,7 @@ def parse_inline(text):
             i += 1
 
     if buffer:
+        buffer = buffer.replace("\t", "   ")
         result.append({"type": active_type, "value": buffer})
 
     return result
