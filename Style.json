@@ -64,7 +64,7 @@
   "inline-code": {
     "color": "#f0f6fc",
     "background": "#1e242a",
-    "font-name": "Courier",
+    "font-name": "Courier-Bold",
     "font-size": 9
   },
   "multiline-code": {
