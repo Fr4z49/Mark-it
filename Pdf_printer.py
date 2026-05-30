@@ -3,7 +3,7 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.lib.units import mm
 from reportlab.pdfbase.pdfmetrics import stringWidth
 
-import Parser
+import New_Parser
 import json
 import io
 
@@ -132,39 +132,61 @@ def draw_header(c, y, text_input, level, cfg, draw=True,
     line_height = get_font_height(font_header, font_size)
     ascent = get_ascent(font_header, font_size)
 
-    total_width = sum(
-        stringWidth(seg["value"], font_header, font_size)
-        for seg in segments
-    )
-
-    if level == 1:
-        curr_x = (PAGE["page-width"] * mm - total_width) / 2
-    else:
-        curr_x = x + margin_left
+    # 1. Divisione in righe tramite l'identificatore "newline"
+    lines = []
+    current_line = []
+    for seg in segments:
+        if seg["type"] == "newline":
+            lines.append(current_line)
+            current_line = []
+        else:
+            current_line.append(seg)
+    if current_line:
+        lines.append(current_line)
 
     curr_y = y - conf["margin-top"] - ascent
+    header_interline = 5 * px  # Spazio tra una riga e l'altra dell'header
 
     c.setFillColor(conf["color"])
     c.setFont(font_header, font_size)
 
-    for seg in segments:
+    # 2. Rendering riga per riga
+    for i, line_segments in enumerate(lines):
+        
+        # Calcola la larghezza specifica per la riga corrente
+        total_width = sum(
+            stringWidth(seg["value"], font_header, font_size)
+            for seg in line_segments
+        )
 
-        valore_testo = seg["value"]
+        if level == 1:
+            curr_x = (PAGE["page-width"] * mm - total_width) / 2
+        else:
+            curr_x = x + margin_left
 
-        if draw:
-            c.drawString(curr_x, curr_y, valore_testo)
+        for seg in line_segments:
+            valore_testo = seg["value"]
 
-        if seg["type"] == "strikethru":
-            w = stringWidth(valore_testo, font_header, font_size)
-            strike_y = curr_y + (font_size * 0.3)
-            c.setLineWidth(1)
-            c.setStrokeColor(conf["color"])
             if draw:
-                c.line(curr_x, strike_y, curr_x + w, strike_y)
+                c.drawString(curr_x, curr_y, valore_testo)
 
-        curr_x += stringWidth(valore_testo, font_header, font_size)
+            if seg["type"] == "strikethru":
+                w = stringWidth(valore_testo, font_header, font_size)
+                strike_y = curr_y + (font_size * 0.3)
+                c.setLineWidth(1)
+                c.setStrokeColor(conf["color"])
+                if draw:
+                    c.line(curr_x, strike_y, curr_x + w, strike_y)
 
-    y_shift = line_height + conf["margin-top"]
+            curr_x += stringWidth(valore_testo, font_header, font_size)
+
+        # Scendi alla riga successiva se non è l'ultima
+        if i < len(lines) - 1:
+            curr_y -= (line_height + header_interline)
+
+    # 3. Calcolo Y Shift Totale (somma delle altezze di tutte le righe create)
+    total_text_height = (len(lines) * line_height) + ((len(lines) - 1) * header_interline)
+    y_shift = total_text_height + conf["margin-top"]
 
     if conf.get("line", False):
         c.setLineWidth(conf["line-thickness"])
@@ -606,7 +628,7 @@ def render(c, parsed_file, cfg, draw=False, page_height=10000):
     for line in parsed_file:
 
         current_line = [line[k] for k in line]
-        print(current_line)
+        #print(current_line)
 
         if current_line[0] == "heading":
             y_shift= draw_header(
@@ -670,7 +692,7 @@ def generate_pdf(input_path, output_path, style_path):
 
     PAGE_HEIGHT_INTERNAL = 10000
 
-    parsed = Parser.main(input_path)
+    parsed = New_Parser.main(input_path)
 
     # --------------------------------------------------
     # PASS 1 — misura l'altezza necessaria
