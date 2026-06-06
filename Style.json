@@ -1,10 +1,10 @@
 {
   "page": {
     "background": "#0d1117",
-    "margin-top": 15,
+    "margin-top": 0,
     "margin-bottom": 15,
-    "margin-left": 15,
-    "margin-right": 15,
+    "margin-left": 10,
+    "margin-right": 10,
     "minimum-page-height": 297,
     "page-width": 210
   },
@@ -14,7 +14,6 @@
     "font-name": "Helvetica-Bold",
     "font-size": 27,
     "margin-top":15,
-    "margin-bottom":0,
     "margin-left":0,
     "line": true,
     "line-start": 0,
@@ -29,7 +28,6 @@
     "font-name": "Helvetica-Bold",
     "font-size": 18,
     "margin-top":30, 
-    "margin-bottom":0,
     "margin-left":5,
     "line": true,
     "line-start": 5,
@@ -44,7 +42,6 @@
     "font-name": "Helvetica-Bold",
     "font-size": 14,
     "margin-top":30,
-    "margin-bottom":0,
     "margin-left":5,
     "line": false,
     "line-start": 0,
@@ -78,7 +75,7 @@
     "color": "#f0f6fc",
     "background": "#1e242a",
     "font-name": "Helvetica-Bold",
-    "font-size": 9,
+    "font-size": 10,
     "padding-x": 2,
     "padding-y": 2
   },
@@ -100,9 +97,17 @@
     "interline": 3, 
     "margin-left": 40,
     "margin-right": 0,
-    "margin-top": 25,
+    "margin-top": 20,
+    "space-between":25,
     "text-pad-left":20,
     "bullet-char": "•"
+  },
+  "image":{
+    "margin-left":10,
+    "margin-right":10,
+    "margin-top":10,
+    "font-name": "Helvetica",
+    "font-size": 8
   }
 
 }
