@@ -27,7 +27,6 @@ class Text:
         self.font_size = font_size
         self.color = "#000000"  
         self.margin_top = 0
-        self.margin_bottom = 0
         self.margin_left = 0
         self.margin_right = 0
         self.alignment = "left"  
@@ -44,7 +43,6 @@ class Text:
         self.line_height = self.font_height * line_spacing  
         self.lines = []
 
-
     def word_wrap(self, page):
         avail_width = page.content_width - self.margin_left - self.margin_right
         current_line = []
@@ -55,7 +53,6 @@ class Text:
             seg_type = segment["type"]
             text = segment["value"]
 
-            # FIX 2: Se incontriamo un 'newline' nativo dal parser, forziamo l'interruzione di riga
             if seg_type == "newline":
                 self.lines.append(current_line)
                 current_line = []
@@ -98,15 +95,14 @@ class Text:
         if block["type"] == "bold":
             c.setFillColor(HexColor(self.color))
             c.setFont(self.font_name + "-Bold", self.font_size)
-            c.drawString(x, y, block["value"])
+            c.drawString(x, y - self.font_height, block["value"])
 
-        # FIX 1: Cambiato da 'strike' a 'strikethru' per accoppiarsi al parser
         elif block["type"] == "strikethru":
             c.setFillColor(HexColor(self.color))
             c.setFont(self.font_name, self.font_size)
-            c.drawString(x, y, block["value"])
+            c.drawString(x, y - self.font_height, block["value"])
             text_width = stringWidth(block["value"], self.font_name, self.font_size)
-            strike_y = y + self.font_size * 0.3
+            strike_y = y + self.font_size * 0.3 - self.font_height
             c.setStrokeColor(HexColor(self.color))
             c.line(x, strike_y, x + text_width, strike_y)
 
@@ -118,15 +114,16 @@ class Text:
             c.setFillColor(HexColor(self.code_background_color))
             c.rect(
                 x - self.code_bg_pad_x,
-                y - self.code_bg_pad_y,
+                y - self.code_bg_pad_y - self.font_height,
                 text_width + self.code_bg_pad_x * 2,
                 code_height + self.code_bg_pad_y * 2,
                 stroke=0, fill=1
             )
             c.setFillColor(HexColor(self.code_color))
-            c.drawString(x, y+1, block["value"])
+            c.drawString(x, y + 1 - self.font_height, block["value"])
 
     def render(self, c, x, y):
+        initial_y = y
         for line in self.lines:
             if self.alignment == "center":
                 line_width = 0
@@ -148,7 +145,7 @@ class Text:
                 else:
                     c.setFillColor(HexColor(self.color))
                     c.setFont(self.font_name, self.font_size)
-                    c.drawString(line_x, y, block["value"])
+                    c.drawString(line_x, y - self.font_height, block["value"])
 
                 if block["type"] == "code":
                     line_x += stringWidth(block["value"], self.code_font_name, self.code_font_size)
@@ -159,14 +156,14 @@ class Text:
 
             y -= self.line_height
 
-        return self.total_height
+        # Restituisce lo spazio effettivamente consumato dal testo puro
+        return initial_y - y
 
     def layout(self, page, extra=0):
-        
         self.content_width = page.content_width + extra
         self.word_wrap(page)
-        self.total_height = self.line_height * len(self.lines) + (self.margin_top * px) + (self.margin_bottom * px)
         self.text_height = self.line_height * len(self.lines)
+        self.total_height = self.text_height
         return self.total_height
 
 
@@ -184,9 +181,16 @@ class Paragraph(Text):
         self.margin_left = parsed_json["text"]["margin-left"] 
         self.margin_right = parsed_json["text"]["margin-right"] 
     
-    def render(self, c,x,y):
-        return super().render(c,x+self.margin_left,y-self.margin_top) +self.margin_top 
+    def layout(self, page):
+        super().layout(page)
+        self.total_height = self.text_height + self.margin_top
+        return self.total_height
+
+    def render(self, c, x, y):
+        # Consuma il margine superiore + l'altezza del testo sputata da super().render
+        return self.margin_top + super().render(c, x + self.margin_left, y - self.margin_top)
     
+
 class Ul_item(Text):
     def __init__(self, content, parsed_json):
         font_name = parsed_json["unordered-list"]["font-name"]
@@ -202,16 +206,16 @@ class Ul_item(Text):
 
     def layout(self, page):
         super().layout(page)
-        self.total_height = self.line_height * (len(self.lines) - 1) + self.font_height + self.margin_top
+        self.total_height = self.text_height + self.margin_top
         return self.total_height
 
     def render(self, c, x, y):
         text_y = y - self.margin_top
         c.setFont(self.font_name, self.font_size)
         c.setFillColor(HexColor(self.color))
-        c.drawString(x + self.margin_left, text_y, self.bullet)
-        super().render(c, x + self.margin_left + self.text_pad_l, text_y)
-        return self.total_height
+        c.drawString(x + self.margin_left, text_y - self.font_height, self.bullet)
+        
+        return self.margin_top + super().render(c, x + self.margin_left + self.text_pad_l, text_y)
 
 
 class Header(Text):
@@ -225,7 +229,6 @@ class Header(Text):
         super().__init__(content, font_name, font_size, line_spacing, parsed_json)
         self.color = style.get("color", "#000000")
         self.margin_top = style.get("margin-top", 0)
-        self.margin_bottom = style.get("margin-bottom", 0)
         self.margin_left = style.get("margin-left", 0)
         self.alignment = style.get("align", "left")  
         
@@ -237,33 +240,33 @@ class Header(Text):
 
     def layout(self, page):
         super().layout(page)
+        # Se c'è la linea, l'ingombro spinge fino alla coordinata della linea stessa
         if self.line:
-            # Aggiungiamo lo spazio della linea all'altezza totale per il calcolo della pagina
-            self.total_height += self.space_between_line * 2
-        return self.total_height
+            # Calcoliamo esattamente dove finisce la linea rispetto alla Y iniziale del testo
+            # last_line_baseline dista (len(lines)-1)*line_height. Sotto c'è lo space_between e il font_height.
+            text_lines_height = (len(self.lines) - 1) * self.line_height
+            self.total_height = text_lines_height + self.space_between_line + self.font_height + self.margin_top
+        else:
+            self.total_height = self.text_height + self.margin_top
+        return self.total_height 
 
     def render(self, c, x, y):
-        # 1. Lasciamo che Text disegni il testo normalmente partendo da 'y'
-        # e memorizziamo l'altezza totale che restituisce
-        total_height = super().render(c, x+self.margin_left, y)
+        text_y = y - self.margin_top
+        super().render(c, x + self.margin_left, text_y) 
         
         if self.line:
-            # 2. Calcoliamo la Y esatta dell'ultima riga di testo stampata.
-            # Sottraendo (len(self.lines) - 1) saltiamo l'ultimo "a capo" a vuoto fatto dalla classe Text.
-            last_line_baseline = y - ((len(self.lines) - 1) * self.line_height)
-            
-            # 3. Posizioniamo la linea sotto la riga reale applicando lo spazio richiesto
-            text_bottom_y = last_line_baseline - self.space_between_line
+            last_line_baseline = text_y - ((len(self.lines) - 1) * self.line_height)
+            text_bottom_y = last_line_baseline - self.space_between_line - self.font_height
             
             start_x = x + self.line_start
             end_x = x + self.content_width - self.line_end
             
-            # 4. Disegniamo la linea
             c.setStrokeColor(HexColor(self.line_color))
             c.setLineWidth(1)  
             c.line(start_x, text_bottom_y, end_x, text_bottom_y)
             
-        return total_height - self.margin_top
+        return self.total_height 
+
 
 class Multiline_Code(Text):
     def __init__(self, content, parsed_json):
@@ -281,22 +284,25 @@ class Multiline_Code(Text):
 
     def layout(self, page):
         super().layout(page)
-        self.total_height = self.line_height * (len(self.lines) - 1) + self.font_height + self.padding_y * 2 + self.margin_top
+        # Corretto: Il rettangolo parte a y - margin_top ed è profondo box_height.
+        # Poiché il testo finisce prima del rettangolo, l'ingombro reale è determinato dal rettangolo.
+        box_height = self.text_height + self.padding_y
+        self.total_height = box_height + self.margin_top
         return self.total_height
 
     def render(self, c, x, y):
-        real_text_height = self.line_height * (len(self.lines) - 1) + self.font_height
-
         box_x      = x + self.margin_left - self.padding_x / 2
-        box_top    = y + self.font_height + self.padding_y - self.margin_top
-        box_height = real_text_height + self.padding_y * 2
-        box_width  = self.page_end + self.padding_x * 2
+        box_top    = y - self.margin_top
+        box_height = self.text_height + self.padding_y 
+        box_width  = self.page_end + self.padding_x 
 
-        c.setFillColor(self.background)
+        c.setFillColor(HexColor(self.background))
         c.rect(box_x, box_top, box_width, -box_height, fill=1, stroke=0)
 
-        super().render(c, x + self.margin_left, y - self.margin_top)
+        # Il testo viene renderizzato leggermente rientrato verticalmente
+        super().render(c, x + self.margin_left + (self.padding_x /2), y - self.margin_top - self.padding_y / 2)
         return self.total_height
+
 
 class Blockquote(Text):
     def __init__(self, content, parsed_json):
@@ -316,27 +322,26 @@ class Blockquote(Text):
 
     def layout(self, page):
         super().layout(page)
-        self.total_height = self.line_height * (len(self.lines) - 1) + self.font_height + self.padding_y * 2 + self.margin_top
+        # Stessa logica matematica del Multiline_Code
+        box_height = self.text_height + self.padding_y
+        self.total_height = box_height + self.margin_top
         return self.total_height
 
     def render(self, c, x, y):
-        real_text_height = self.line_height * (len(self.lines) - 1) + self.font_height
-
         box_x      = x + self.margin_left - self.padding_x / 2
-        box_top    = y + self.font_height + self.padding_y - self.margin_top
-        box_height = real_text_height + self.padding_y * 2
-        box_width  = self.page_end + self.padding_x * 2
+        box_top    = y - self.margin_top
+        box_height = self.text_height + self.padding_y 
+        box_width  = self.page_end + self.padding_x
 
-        c.setFillColor(self.background)
+        c.setFillColor(HexColor(self.background))
         c.rect(box_x, box_top, box_width, -box_height, fill=1, stroke=0)
 
         c.setLineWidth(2)
-        c.setStrokeColor(self.line_color)
+        c.setStrokeColor(HexColor(self.line_color))
         c.line(box_x, box_top, box_x, box_top - box_height)
 
-        super().render(c, x + self.margin_left, y - self.margin_top)
+        super().render(c, x + self.margin_left + (self.padding_x /2), y - self.margin_top - self.padding_y / 2)
         return self.total_height
-
 
 
 
