@@ -124,7 +124,7 @@ class Text:
                 stroke=0, fill=1
             )
             c.setFillColor(HexColor(self.code_color))
-            c.drawString(x, y, block["value"])
+            c.drawString(x, y+1, block["value"])
 
     def render(self, c, x, y):
         for line in self.lines:

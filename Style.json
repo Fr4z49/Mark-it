@@ -80,7 +80,7 @@
     "font-name": "Helvetica-Bold",
     "font-size": 9,
     "padding-x": 2,
-    "padding-y": 1
+    "padding-y": 2
   },
   "multiline-code": {
     "color": "#f0f6fc",
