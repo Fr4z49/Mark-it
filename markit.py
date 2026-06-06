@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
 import argparse
-from  Pdf_printer import generate_pdf 
+import New_Parser
+
 
 parser = argparse.ArgumentParser()
 
@@ -29,6 +30,5 @@ print(f"input: {args.input}")
 print(f"output: {args.output}")
 print(f"stile: {args.style}")
 
-
-generate_pdf(args.input, args.output, args.style)
+New_Parser.main(args.input, args.output, args.style)
 

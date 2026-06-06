@@ -1,4 +1,5 @@
 import re
+import NewPdfPrinter
 
 def parse_inline(line, block_type):
     #line = line.replace("\t", "   ")
@@ -44,15 +45,18 @@ def parse(lines):
     for line in lines:
         # 1. Gestione Blocco Multiline Code attivo
         line = line.replace("\t", "    ")
-        if current_block and current_block['type'] == 'multiline_code':
+        if current_block and current_block['type'] == 'Multiline_code':
             if line.lstrip().startswith("```"):
                 # Rimuove l'ultimo newline superfluo prima di chiudere
-                if current_block['content'].endswith('\n'):
-                    current_block['content'] = current_block['content'][:-1]
+                if current_block['content'] and current_block['content'][-1]['type'] == 'newline':
+                    current_block['content'].pop()
                 parsed_blocks.append(current_block)
                 current_block = None
             else:
-                current_block['content'] += line + '\n'
+                # Se il blocco non è vuoto, inserisce il blocco newline prima della nuova linea
+                if current_block['content']:
+                    current_block['content'].append({'type': 'newline', 'value': '\n'})
+                current_block['content'].append({'type': 'text', 'value': line})
             continue
 
         # 2. Linea Vuota (Separatore di blocchi)
@@ -68,7 +72,7 @@ def parse(lines):
         if stripped.startswith("```"):
             if current_block:
                 parsed_blocks.append(current_block)
-            current_block = {'type': 'multiline_code', 'content': ''}
+            current_block = {'type': 'Multiline_code', 'content': []}
         
         elif stripped.startswith("#"):
             if current_block:
@@ -85,7 +89,7 @@ def parse(lines):
                 clean_content = m_hashes.group(2)
             
             current_block = {
-                'type': 'heading',
+                'type': 'Heading',
                 'level': level,
                 'content': parse_inline(clean_content, "header")
             }
@@ -95,7 +99,7 @@ def parse(lines):
                 parsed_blocks.append(current_block)
             clean_content = stripped[1:].lstrip()
             current_block = {
-                'type': 'ul_item',
+                'type': 'Ul_item',
                 'content': parse_inline(clean_content, "ul")
             }
 
@@ -108,7 +112,7 @@ def parse(lines):
                 if current_block:
                     parsed_blocks.append(current_block)
                 current_block = {
-                    'type': 'blockquote',
+                    'type': 'Blockquote',
                     'content': parse_inline(clean_content, "blockquote")
                 }
 
@@ -120,26 +124,26 @@ def parse(lines):
                 current_block['content'].extend(parse_inline(line, "placeholder"))
             else:
                 current_block = {
-                    'type': 'paragraph',
+                    'type': 'Paragraph',
                     'content': parse_inline(line, "placeholder")
                 }
 
     # Aggiunge l'ultimo blocco rimasto aperto a fine file
     if current_block:
-        if current_block['type'] == 'multiline_code' and current_block['content'].endswith('\n'):
-            current_block['content'] = current_block['content'][:-1]
+        if current_block['type'] == 'Multiline_code' and current_block['content'] and current_block['content'][-1]['type'] == 'newline':
+            current_block['content'].pop()
         parsed_blocks.append(current_block)
 
     return parsed_blocks
 
 
-def main(document):
+def main(document,output_path,style_path):
     with open(document, "r", encoding="utf-8") as file:
         lines = file.read().split("\n")
 
     parsed = parse(lines)
     #print(parsed)
-    return parsed
+    NewPdfPrinter.main(parsed,output_path,style_path)
 
 if __name__ == "__main__":
     main("DocumentoProva.mi")

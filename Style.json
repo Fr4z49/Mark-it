@@ -3,45 +3,53 @@
     "background": "#0d1117",
     "margin-top": 15,
     "margin-bottom": 15,
-    "margin-left": 40,
-    "margin-right": 40,
+    "margin-left": 15,
+    "margin-right": 15,
     "minimum-page-height": 297,
-    "page-width": 210,
-    "page-style": "single"
+    "page-width": 210
   },
   "header1": {
+    "align": "center",
     "color":"#c9d1d9",
-    "font-name": "Helvetica",
+    "font-name": "Helvetica-Bold",
     "font-size": 27,
-    "font-style": "Bold",
     "margin-top":15,
+    "margin-bottom":0,
+    "margin-left":0,
     "line": true,
-    "line-start": 15,
-    "line-end": 15,
+    "line-start": 0,
+    "line-end": 0,
+    "space-between-line": 10,
     "line-thickness": 2,
-    "line-color": "#ffffff"
+    "line-color": "#c9d1d9"
   },
   "header2": {
+    "align": "left",
     "color": "#f0f6fc",
-    "font-name": "Helvetica",
+    "font-name": "Helvetica-Bold",
     "font-size": 18,
-    "font-style": "Bold",
-    "margin-top":30,
+    "margin-top":30, 
+    "margin-bottom":0,
+    "margin-left":5,
     "line": true,
-    "line-start": 80,
-    "line-end": 25,
+    "line-start": 5,
+    "line-end": 0,
+    "space-between-line": 10,
     "line-thickness": 1,
     "line-color": "#ffffff"
   },
   "header3": {
+    "align": "left",
     "color": "#58a6ff",
-    "font-name": "Helvetica",
+    "font-name": "Helvetica-Bold",
     "font-size": 14,
-    "font-style": "Bold",
     "margin-top":30,
+    "margin-bottom":0,
+    "margin-left":5,
     "line": false,
-    "line-start": 80,
-    "line-end": 15,
+    "line-start": 0,
+    "line-end": 0,
+    "space-between-line": 10,
     "line-thickness": 1,
     "line-color": "#ffffff"
   },
@@ -49,34 +57,41 @@
     "color": "#f0f6fc",
     "font-name": "Helvetica",
     "font-size": 12,
-    "interline": 3,
-    "margin-top": 25,
-    "margin-left": 40,
-    "margin-right": 40
+    "interline": 1.2,
+    "margin-top": 20,
+    "margin-left": 15,
+    "margin-right": 0
   },
   "quote": {
     "color": "#adbac7",
     "background":"#12161a",
     "line-color": "#484f58",
     "font-name": "Helvetica",
-    "font-size": 14
+    "font-size": 14,
+    "margin-left": 30,
+    "margin-right": 15,
+    "margin-top":15,
+    "padding-y":8,
+    "padding-x":15
   },
   "inline-code": {
     "color": "#f0f6fc",
     "background": "#1e242a",
-    "font-name": "Courier-Bold",
-    "font-size": 9
+    "font-name": "Helvetica-Bold",
+    "font-size": 9,
+    "padding-x": 2,
+    "padding-y": 1
   },
   "multiline-code": {
     "color": "#f0f6fc",
     "background": "#151b23", 
     "font-name": "Helvetica",
     "font-size": 13 ,
-    "margin-left": 40,
-    "margin-right": 40,
-    "margin-top": 30,
-    "background-pad-y":15,
-    "background-pad-x":15
+    "margin-left": 30,
+    "margin-right": 0,
+    "margin-top": 25,
+    "padding-y":5,
+    "padding-x":15
   },
   "unordered-list": {
     "color": "#f0f6fc", 
@@ -84,9 +99,9 @@
     "font-size": 13 ,
     "interline": 3, 
     "margin-left": 40,
-    "margin-right": 40,
-    "margin-top": 30,
-    "text-pad-left":10,
+    "margin-right": 0,
+    "margin-top": 25,
+    "text-pad-left":20,
     "bullet-char": "•"
   }
 
