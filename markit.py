@@ -3,32 +3,33 @@
 import argparse
 import New_Parser
 
+def main():
+    parser = argparse.ArgumentParser()
 
-parser = argparse.ArgumentParser()
+    parser.add_argument("input")
+    parser.add_argument("-o", "--output")
+    parser.add_argument("-s", "--style")
 
-parser.add_argument("input")
-parser.add_argument("-o", "--output")
-parser.add_argument("-s", "--style")
+    args = parser.parse_args()
 
-args = parser.parse_args()
+    if args.output is None:
+        args.output = args.input + ".pdf"
 
-if args.output is None:
-    args.output = args.input +".pdf"
+    if args.style is None:
+        args.style = "Style.json"
 
-if args.style is None:
-    args.style = "Style.json"
+    if args.output[-4:] != ".pdf":
+        args.output += ".pdf"
+    if args.input[-3:] != ".mi":
+        args.input += ".mi"
+    if args.style[-5:] != ".json":
+        args.style += ".json"
 
+    print(f"input: {args.input}")
+    print(f"output: {args.output}")
+    print(f"stile: {args.style}")
 
-if args.output[-4:] != ".pdf":
-    args.output += ".pdf"
-if args.input[-3:] != ".mi":
-    args.input += ".mi"
-if args.style[-5:] != ".json":
-    args.style += ".json"
+    New_Parser.main(args.input, args.output, args.style)
 
-print(f"input: {args.input}")
-print(f"output: {args.output}")
-print(f"stile: {args.style}")
-
-New_Parser.main(args.input, args.output, args.style)
-
+if __name__ == "__main__":
+    main()

@@ -412,7 +412,7 @@ def render(c, objects, page):
 
 def main(parsed_file, output_path, style_path):
     parsed_json = LoadJson(style_path)
-    print(parsed_file)
+    #print(parsed_file)
     PAGE = parsed_json["page"]
 
     page = Page(
