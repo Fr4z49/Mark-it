@@ -3,6 +3,8 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.lib.units import mm
 from reportlab.pdfbase.pdfmetrics import stringWidth
 from reportlab.lib.colors import HexColor
+from reportlab.lib.utils import ImageReader
+
 import json
 
 px = 0.75
@@ -348,6 +350,38 @@ class Blockquote(Text):
         super().render(c, x + self.margin_left + (self.padding_x /2), y - self.margin_top - self.padding_y / 2)
         return self.total_height
 
+# =========================
+# IMAGE
+# =========================
+
+class Image:
+    def __init__(self, path, parsed_json,size):
+        self.style = parsed_json["image"]
+        self.path = path
+        self.margin_top = self.style.get("margin-top", 0)
+        self.margin_left = self.style.get("margin-left", 0)
+        #self.size = self.style.get("size",100)/100
+        self.size = size/100
+        self.width, self.height = ImageReader(path).getSize()
+        self.totalHeight = 0
+
+    def layout(self,page):
+        
+        self.total_height = self.height * self.size + self.margin_top
+
+        return self.total_height
+
+    def render(self, c, x, y):
+        c.drawImage(
+            self.path,
+            x + self.margin_left,
+            y-self.total_height,
+            width=self.width*self.size,
+            height=self.height*self.size
+        )
+        return self.total_height 
+
+
 
 
 # =========================
@@ -383,6 +417,8 @@ def blocks_to_objects(parsed, parsed_json):
             objects.append(Blockquote(element["content"], parsed_json))
         elif element["type"] == "Ul_item":
             objects.append(Ul_item(element["content"], parsed_json))
+        elif element["type"] == "img":
+            objects.append(Image(element["path"], parsed_json,element["size"]))
 
         elif element["type"] == "Heading":
             level_key = f"header{element['level']}"

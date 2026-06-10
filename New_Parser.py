@@ -67,6 +67,7 @@ def parse(lines):
             continue
 
         stripped = line.lstrip()
+        img_match = re.fullmatch(r'!\((.*?)\)\[(\d+)\]', stripped)
 
         # 3. Riconoscimento inizio Nuovi Blocchi
         if stripped.startswith("```"):
@@ -105,9 +106,9 @@ def parse(lines):
 
         elif stripped.startswith(">"):
             clean_content = stripped[1:].lstrip()
-            if current_block and current_block['type'] == 'blockquote':
+            if current_block and current_block['type'] == 'Blockquote':
                 current_block['content'].append({'type': 'newline', 'value': '\n'})
-                current_block['content'].extend(parse_inline(clean_content, "blockquote"))
+                current_block['content'].extend(parse_inline(clean_content, "Blockquote"))
             else:
                 if current_block:
                     parsed_blocks.append(current_block)
@@ -115,6 +116,18 @@ def parse(lines):
                     'type': 'Blockquote',
                     'content': parse_inline(clean_content, "blockquote")
                 }
+                
+
+        elif img_match:
+            if current_block:
+                parsed_blocks.append(current_block)
+                current_block = None
+
+            parsed_blocks.append({
+                'type': 'img',
+                'path': img_match.group(1),
+                'size': int(img_match.group(2))
+            })
 
         # 4. Linea di testo normale (o continuazione del blocco precedente)
         else:
@@ -142,7 +155,7 @@ def main(document,output_path,style_path):
         lines = file.read().split("\n")
 
     parsed = parse(lines)
-    #print(parsed)
+    print(parsed)
     NewPdfPrinter.main(parsed,output_path,style_path)
 
 if __name__ == "__main__":

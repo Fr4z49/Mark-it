@@ -102,12 +102,11 @@
     "text-pad-left":20,
     "bullet-char": "•"
   },
+
   "image":{
-    "margin-left":10,
-    "margin-right":10,
-    "margin-top":10,
-    "font-name": "Helvetica",
-    "font-size": 8
+    "margin-left":25,
+    "margin-top":25,
+    "size": 50
   }
 
 }
