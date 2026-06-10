@@ -95,6 +95,7 @@ soluzione... Python!:
 
 ## Usare Mark-it (Linux): 
 
+### Modalità portatile: 
 - Clona il repository:
     ```
     git clone https://www.github.com/Fr4z49/Mark-it
@@ -120,5 +121,6 @@ soluzione... Python!:
     ```
     ./markit.py input.mi [-o output.pdf] [-s style.json]
     ```
+
 
 
