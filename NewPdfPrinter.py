@@ -234,9 +234,11 @@ class Header(Text):
         
         self.line_color = style.get("line-color", "#000000")
         self.line = style.get("line", True)
+        self.line_width = style.get("line-thickness",1)
         self.line_start = style.get("line-start", 0) 
         self.line_end = style.get("line-end", 0)
         self.space_between_line = style.get("space-between-line", 0)
+        self.level = level
 
     def layout(self, page):
         super().layout(page)
@@ -253,6 +255,9 @@ class Header(Text):
     def render(self, c, x, y):
         text_y = y - self.margin_top
         super().render(c, x + self.margin_left, text_y) 
+
+        c.bookmarkHorizontalAbsolute(self.lines[0][0]["value"], y)
+        c.addOutlineEntry(self.lines[0][0]["value"], self.lines[0][0]["value"], level=int(self.level[-1])-1)
         
         if self.line:
             last_line_baseline = text_y - ((len(self.lines) - 1) * self.line_height)
@@ -262,9 +267,9 @@ class Header(Text):
             end_x = x + self.content_width - self.line_end
             
             c.setStrokeColor(HexColor(self.line_color))
-            c.setLineWidth(1)  
+            c.setLineWidth(self.line_width)  
             c.line(start_x, text_bottom_y, end_x, text_bottom_y)
-            
+
         return self.total_height 
 
 

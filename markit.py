@@ -46,6 +46,7 @@ def main():
             if not home_config_dir.exists():
                 home_config_dir.mkdir(parents=True, exist_ok=True)
 
+            # Se non esiste il file nella cartella in .config, lo creo
             if not home_config_style_default.exists() and system_style.exists():
                 shutil.copy(system_style, home_config_style_default)
                 print(f"Creato file di stile predefinito in: {home_config_style_default}")
