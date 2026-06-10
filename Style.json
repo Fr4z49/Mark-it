@@ -19,7 +19,7 @@
     "line-start": 0,
     "line-end": 0,
     "space-between-line": 10,
-    "line-thickness": 2,
+    "line-thickness": 2.5,
     "line-color": "#c9d1d9"
   },
   "header2": {
