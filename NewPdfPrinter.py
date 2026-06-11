@@ -312,7 +312,7 @@ class Multiline_Code(Text):
 
 
 class Blockquote(Text):
-    def __init__(self, content, parsed_json):
+    def __init__(self, content,special, parsed_json):
         font_name = parsed_json["quote"]["font-name"]
         font_size = parsed_json["quote"]["font-size"]
         line_spacing = parsed_json["quote"].get("line-spacing", 1.2)
@@ -320,12 +320,33 @@ class Blockquote(Text):
         
         self.color = parsed_json["quote"].get("color", "#000000")
         self.line_color = parsed_json["quote"].get("line-color", "#ffffff")
-        self.margin_top = parsed_json["quote"]["margin-top"] * px
         self.background = parsed_json["quote"]["background"]
+        if special: #(se non è None)
+            modifier = self.map_special(special)
+            self.color = parsed_json["quote"].get("color-"+modifier, "#000000")
+            self.line_color = parsed_json["quote"].get("line-color-"+modifier, "#ffffff")
+            self.background = parsed_json["quote"].get("background-"+modifier,"#000000")
+            
+        else: #se è none usa i colori principali
+            self.color = parsed_json["quote"].get("color", "#000000")
+            self.line_color = parsed_json["quote"].get("line-color", "#ffffff")
+            self.background = parsed_json["quote"].get("background","#000000")
+
+
+        self.margin_top = parsed_json["quote"]["margin-top"] * px
         self.padding_x = parsed_json["quote"].get("padding-x")
         self.padding_y = parsed_json["quote"].get("padding-y")
         self.margin_left = parsed_json["quote"].get("margin-left") * px 
         self.margin_right = parsed_json["quote"].get("margin-right") * px
+    
+    def map_special(self,special):
+        return {
+            "n": "note",
+            "t": "tip",
+            "i": "important",
+            "w": "warning",
+            "c": "caution"
+        }.get(special)
 
     def layout(self, page):
         super().layout(page)
@@ -349,6 +370,10 @@ class Blockquote(Text):
 
         super().render(c, x + self.margin_left + (self.padding_x /2), y - self.margin_top - self.padding_y / 2)
         return self.total_height
+
+class Table(Text):
+    def __init__(self):
+        pass 
 
 # =========================
 # IMAGE
@@ -409,12 +434,13 @@ class Page:
 def blocks_to_objects(parsed, parsed_json):
     objects = []
     for element in parsed:
+        print (element)
         if element["type"] == "Paragraph":
             objects.append(Paragraph(element["content"], parsed_json))
         elif element["type"] == "Multiline_code":
             objects.append(Multiline_Code(element["content"], parsed_json))
         elif element["type"] == "Blockquote":
-            objects.append(Blockquote(element["content"], parsed_json))
+            objects.append(Blockquote(element["content"],element["special"], parsed_json))
         elif element["type"] == "Ul_item":
             objects.append(Ul_item(element["content"], parsed_json))
         elif element["type"] == "img":

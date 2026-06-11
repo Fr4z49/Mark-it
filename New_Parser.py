@@ -68,6 +68,7 @@ def parse(lines):
 
         stripped = line.lstrip()
         img_match = re.fullmatch(r'!\((.*?)\)\[(\d+)\]', stripped)
+        table_row_match = re.findall(r"(?<=\|)[^|]+(?=\|)", stripped)
 
         # 3. Riconoscimento inizio Nuovi Blocchi
         if stripped.startswith("```"):
@@ -105,18 +106,26 @@ def parse(lines):
             }
 
         elif stripped.startswith(">"):
-            clean_content = stripped[1:].lstrip()
-            if current_block and current_block['type'] == 'Blockquote':
-                current_block['content'].append({'type': 'newline', 'value': '\n'})
-                current_block['content'].extend(parse_inline(clean_content, "Blockquote"))
+            if current_block:
+                parsed_blocks.append(current_block)
+            
+            content = re.match(r'^>([n|t|i|w|c])?\s?(.*)', stripped)
+            
+            # Se c'è un tipo speciale ...
+            if content.group(1):
+                special = content.group(1)
             else:
-                if current_block:
-                    parsed_blocks.append(current_block)
-                current_block = {
-                    'type': 'Blockquote',
-                    'content': parse_inline(clean_content, "blockquote")
-                }
-                
+                special = None
+
+            clean_content = content.group(2)
+
+            current_block = {
+                'type': 'Blockquote',
+                'special': special,
+                'content': parse_inline(clean_content, "blockquote")
+            }
+
+                   
 
         elif img_match:
             if current_block:
@@ -127,6 +136,22 @@ def parse(lines):
                 'type': 'img',
                 'path': img_match.group(1),
                 'size': int(img_match.group(2))
+            })
+        
+        elif table_row_match:
+            # crea tabella se non esiste
+            if not current_block or current_block.get('type') != 'table':
+                if current_block:
+                    parsed_blocks.append(current_block)
+
+                current_block = {
+                    'type': 'table',
+                    'rows': []
+                }
+
+            current_block['rows'].append({
+                'type': 'table_row',
+                'content': table_row_match
             })
 
         # 4. Linea di testo normale (o continuazione del blocco precedente)
@@ -155,7 +180,7 @@ def main(document,output_path,style_path):
         lines = file.read().split("\n")
 
     parsed = parse(lines)
-    print(parsed)
+    #print(parsed)
     NewPdfPrinter.main(parsed,output_path,style_path)
 
 if __name__ == "__main__":
