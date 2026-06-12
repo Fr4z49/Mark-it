@@ -1,5 +1,9 @@
 import re
-import NewPdfPrinter
+
+try:
+    from . import NewPdfPrinter
+except ImportError:
+    import NewPdfPrinter
 
 def parse_inline(line, block_type):
     #line = line.replace("\t", "   ")

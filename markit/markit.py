@@ -4,7 +4,11 @@ import argparse
 import os
 import shutil
 from pathlib import Path
-import New_Parser
+
+try:
+    from . import New_Parser
+except ImportError:
+    import New_Parser
 
 def parse_arguments():
     """Gestisce il parsing degli argomenti comuni a entrambe le modalità."""
