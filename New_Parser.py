@@ -175,13 +175,13 @@ def parse(lines):
     return parsed_blocks
 
 
-def main(document,output_path,style_path):
+def main(document,output_path,style_path,font_path):
     with open(document, "r", encoding="utf-8") as file:
         lines = file.read().split("\n")
 
     parsed = parse(lines)
     #print(parsed)
-    NewPdfPrinter.main(parsed,output_path,style_path)
+    NewPdfPrinter.main(parsed,output_path,style_path,font_path)
 
 if __name__ == "__main__":
     main("DocumentoProva.mi")

@@ -4,6 +4,8 @@ from reportlab.lib.units import mm
 from reportlab.pdfbase.pdfmetrics import stringWidth
 from reportlab.lib.colors import HexColor
 from reportlab.lib.utils import ImageReader
+from reportlab.pdfbase.ttfonts import TTFont
+from pathlib import Path
 
 import json
 
@@ -15,6 +17,10 @@ def get_font_height(font_name, font_size):
     ascender = face.ascent / 1000 * font_size
     descender = face.descent / 1000 * font_size
     return ascender - descender
+
+def register_font(font_name,file_name,folder):
+    font_path = Path(folder / file_name).expanduser()
+    pdfmetrics.registerFont(TTFont(font_name, font_path))
 
 
 # =========================
@@ -434,7 +440,7 @@ class Page:
 def blocks_to_objects(parsed, parsed_json):
     objects = []
     for element in parsed:
-        print (element)
+        #print (element)
         if element["type"] == "Paragraph":
             objects.append(Paragraph(element["content"], parsed_json))
         elif element["type"] == "Multiline_code":
@@ -477,15 +483,18 @@ def render(c, objects, page):
         page.global_y -= obj.render(c, page.margin_left, page.global_y)
 
 
-def main(parsed_file, output_path, style_path):
+def main(parsed_file, output_path, style_path,font_path):
     parsed_json = LoadJson(style_path)
     #print(parsed_file)
     PAGE = parsed_json["page"]
-
     page = Page(
         PAGE["minimum-page-height"],
         PAGE["page-width"]
     )
+
+    FONTS = parsed_json["custom-fonts"]
+    for font in FONTS:
+        register_font(font,FONTS[font],font_path)
 
     page.margin_top    = PAGE["margin-top"]    * px * mm
     page.margin_bottom = PAGE["margin-bottom"] * px * mm
