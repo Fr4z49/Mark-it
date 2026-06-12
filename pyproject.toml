@@ -1,26 +1,20 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "mark-it-pdf" # Nome del pacchetto Python (evitiamo conflitti)
-version = "1.0.0"
-description = "Un formato simile a markdown progettato per creare pdf con stili predefiniti"
+name = "markit"
+version = "0.1.0"
+description = "MarkIT - markdown-like tool to PDF"
 readme = "README.md"
-requires-python = ">=3.8"
-authors = [
-    { name = "Fr4z49" }
-]
-classifiers = [
-    "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License", # Cambiala se usi un'altra licenza
-]
-dependencies = [
-    "reportlab>=4.0.0", # La tua dipendenza principale
-]
+requires-python = ">=3.10"
+dependencies = []
 
 [project.scripts]
-markit = "markit:main" # Questo creerà un comando di sistema chiamato 'markit'
+markit = "markit.markit:main"
 
 [tool.setuptools]
-py-modules = ["markit", "New_Parser", "NewPdfPrinter"]
+packages = ["markit"]
+
+[tool.setuptools.package-data]
+markit = ["config/**/*"]
