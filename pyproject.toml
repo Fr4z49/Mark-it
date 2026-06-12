@@ -13,5 +13,8 @@ dependencies = []
 [tool.setuptools]
 packages = ["markit"]
 
+[tool.setuptools.package-data]
+markit = ["config/*.json"]
+
 [project.scripts]
 markit = "markit.markit:main"
