@@ -1,20 +1,17 @@
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "markit"
 version = "0.1.0"
-description = "MarkIT - markdown-like tool to PDF"
+description = "Mark-it CLI tool"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.8"
 dependencies = []
-
-[project.scripts]
-markit = "markit.markit:main"
 
 [tool.setuptools]
 packages = ["markit"]
 
-[tool.setuptools.package-data]
-markit = ["config/**/*"]
+[project.scripts]
+markit = "markit.markit:main"
