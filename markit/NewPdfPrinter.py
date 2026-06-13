@@ -7,20 +7,29 @@ from reportlab.lib.utils import ImageReader
 from reportlab.pdfbase.ttfonts import TTFont
 from pathlib import Path
 
+from reportlab.pdfbase.ttfonts import TTFError
+
 import json
 
 px = 0.75
 
 
 def get_font_height(font_name, font_size):
-    face = pdfmetrics.getFont(font_name).face
+    try:
+        face = pdfmetrics.getFont(font_name).face
+    except:
+        face = pdfmetrics.getFont("Helvetica").face
     ascender = face.ascent / 1000 * font_size
     descender = face.descent / 1000 * font_size
     return ascender - descender
 
 def register_font(font_name,file_name,folder):
     font_path = Path(folder / file_name).expanduser()
-    pdfmetrics.registerFont(TTFont(font_name, font_path))
+    try:
+        pdfmetrics.registerFont(TTFont(font_name, font_path))
+    except TTFError:
+        print(f"\033[31mUnable to register the font '{font_name}'.")
+        print(f"Is it really in '{font_path}'? \nor did you type the font file_name wrong in the 'style.json'?\033[0m")
 
 
 # =========================
@@ -31,7 +40,15 @@ class Text:
         self.content = content
         self.total_height = 0
         self.page_end = 0
-        self.font_name = font_name
+
+        if font_name in pdfmetrics.getRegisteredFontNames() or font_name in pdfmetrics.standardFonts:
+            self.font_name = font_name
+        else:
+            self.font_name = "Helvetica"
+            print(self)
+            print(f"\033[31mUnable to use the font '{font_name}'\nDefaulting to font:'Helvetica'.\033[0m")
+            print(f"\033[33mPlease check the 'Style.json' file currently in use\033[0m")
+        
         self.font_size = font_size
         self.color = "#000000"  
         self.margin_top = 0
@@ -70,7 +87,10 @@ class Text:
             if seg_type == "code":
                 seg_width = stringWidth(text, self.code_font_name, self.code_font_size)
             elif seg_type == "bold":
-                seg_width = stringWidth(text, self.font_name + "-Bold", self.font_size)
+                try:
+                    seg_width = stringWidth(text, self.font_name + "-Bold", self.font_size)
+                except KeyError:
+                    seg_width = stringWidth(text, self.font_name + self.font_size)
             else:
                 seg_width = stringWidth(text, self.font_name, self.font_size)
 
@@ -102,7 +122,23 @@ class Text:
     def render_formatted(self, c, x, y, block):
         if block["type"] == "bold":
             c.setFillColor(HexColor(self.color))
-            c.setFont(self.font_name + "-Bold", self.font_size)
+            try:
+                c.setFont(self.font_name + "-Bold", self.font_size)
+            except KeyError:
+                c.setFont("Helvetica-Bold", self.font_size)
+                print(f"\033[31m'{self.font_name}' Bold variant is missing, defaulting to 'Helvetica-Bold'.\033[0m")
+                print(f"\033[33mPlease import {self.font_name}-Bold inside the 'Style.json' currently in use.\033[0m")
+            c.drawString(x, y - self.font_height, block["value"])
+        
+        if block["type"] == "italic":
+            c.setFillColor(HexColor(self.color))
+            try:
+                c.setFont(self.font_name + "-Oblique", self.font_size)
+            except KeyError:
+                c.setFont("Helvetica-Oblique", self.font_size)
+                print(f"\033[31m'{self.font_name}' font Italic variant is missing, defaulting to 'Helvetica-Oblique'.\033[0m")
+                print(f"\033[33mPlease import {self.font_name}-Oblique inside the 'Style.json' currently in use.\033[0m")
+
             c.drawString(x, y - self.font_height, block["value"])
 
         elif block["type"] == "strikethru":
@@ -112,6 +148,7 @@ class Text:
             text_width = stringWidth(block["value"], self.font_name, self.font_size)
             strike_y = y + self.font_size * 0.3 - self.font_height
             c.setStrokeColor(HexColor(self.color))
+            c.setLineWidth(1)
             c.line(x, strike_y, x + text_width, strike_y)
 
         elif block["type"] == "code":
@@ -449,8 +486,12 @@ def blocks_to_objects(parsed, parsed_json):
             objects.append(Blockquote(element["content"],element["special"], parsed_json))
         elif element["type"] == "Ul_item":
             objects.append(Ul_item(element["content"], parsed_json))
+        
         elif element["type"] == "img":
-            objects.append(Image(element["path"], parsed_json,element["size"]))
+            try:
+                objects.append(Image(element["path"], parsed_json,element["size"]))
+            except OSError:
+                objects.append(Paragraph([{'type':'text','value':f"[{element["path"]} Cannot be loaded]"}], parsed_json))
 
         elif element["type"] == "Heading":
             level_key = f"header{element['level']}"

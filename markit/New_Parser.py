@@ -13,6 +13,8 @@ def parse_inline(line, block_type):
         r"|"
         r"\_\_(?P<strikethru>.+?)\_\_"
         r"|"
+        r"\\\\(?P<italic>.+?)\\\\"
+        r"|"
         r"`(?P<code>.+?)`"
     )
 
@@ -27,6 +29,9 @@ def parse_inline(line, block_type):
 
         if m.group("bold"):
             result.append({'type': 'bold', 'value': m.group("bold")})
+        
+        elif m.group("italic"):
+            result.append({'type': 'italic', 'value': m.group("italic")})
 
         elif m.group("strikethru"):
             result.append({'type': 'strikethru', 'value': m.group("strikethru")})
