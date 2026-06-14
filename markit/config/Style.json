@@ -101,7 +101,7 @@
   "inline-code": {
     "color": "#f0f6fc",
     "background": "#1e242a",
-    "font-name": "Helvetica",
+    "font-name": "Helvetica-Bold",
     "font-size": 10,
     "padding-x": 2,
     "padding-y": 2

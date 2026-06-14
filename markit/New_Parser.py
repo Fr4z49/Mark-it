@@ -16,6 +16,8 @@ def parse_inline(line, block_type):
         r"\\\\(?P<italic>.+?)\\\\"
         r"|"
         r"`(?P<code>.+?)`"
+        r"|"
+        r"(?P<arrow>-->)"
     )
 
     result = []
@@ -38,6 +40,9 @@ def parse_inline(line, block_type):
 
         elif m.group("code"):
             result.append({'type': 'code', 'value': m.group("code")})
+
+        elif m.group("arrow"):
+            result.append({'type': 'text', 'value':"➡"})
 
         last_index = end
 

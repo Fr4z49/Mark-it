@@ -158,14 +158,14 @@ class Text:
 
             c.setFillColor(HexColor(self.code_background_color))
             c.rect(
-                x - self.code_bg_pad_x,
+                x,
                 y - self.code_bg_pad_y - self.font_height,
                 text_width + self.code_bg_pad_x * 2,
                 code_height + self.code_bg_pad_y * 2,
                 stroke=0, fill=1
             )
             c.setFillColor(HexColor(self.code_color))
-            c.drawString(x, y + 1 - self.font_height, block["value"])
+            c.drawString(x + self.code_bg_pad_x, y + 1 - self.font_height, block["value"])
 
     def render(self, c, x, y):
         initial_y = y
@@ -193,7 +193,7 @@ class Text:
                     c.drawString(line_x, y - self.font_height, block["value"])
 
                 if block["type"] == "code":
-                    line_x += stringWidth(block["value"], self.code_font_name, self.code_font_size)
+                    line_x += stringWidth(block["value"], self.code_font_name, self.code_font_size) + self.code_bg_pad_x *2
                 elif block["type"] == "bold":
                     line_x += stringWidth(block["value"], self.font_name + "-Bold", self.font_size)
                 else:
@@ -491,7 +491,8 @@ def blocks_to_objects(parsed, parsed_json):
             try:
                 objects.append(Image(element["path"], parsed_json,element["size"]))
             except OSError:
-                objects.append(Paragraph([{'type':'text','value':f"[{element["path"]} Cannot be loaded]"}], parsed_json))
+                objects.append(Paragraph([{'type':'italic','value':f"[file:'{element["path"]}' Cannot be loaded]"}], parsed_json))
+                print(f"\033[31mError loading image '{element["path"]}'. Please check the image path.\033[0m")
 
         elif element["type"] == "Heading":
             level_key = f"header{element['level']}"
