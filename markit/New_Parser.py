@@ -11,13 +11,28 @@ def parse_inline(line, block_type):
     pattern = re.compile(
         r"\*\*(?P<bold>.+?)\*\*"
         r"|"
-        r"\_\_(?P<strikethru>.+?)\_\_"
+        r"\_\-(?P<strikethru>.+?)\-\_" 
+        r"|"
+        r"\_\_(?P<underline>.+?)\_\_"
         r"|"
         r"\\\\(?P<italic>.+?)\\\\"
         r"|"
         r"`(?P<code>.+?)`"
         r"|"
         r"(?P<arrow>-->)"
+        r"|"
+        r"(?P<link>\((?P<l_text>[^)]+)\)\^(?P<l_url>https?://[^\s\)]+))"
+        r"|"
+        r"(?P<E_bold>\\\*\*)"
+        r"|"
+        r"(?P<E_underline>\\\_\_)"
+        r"|"
+        r"(?P<E_code>\\`)"
+        r"|"
+        r"(?P<E_quote>\\>)"
+        r"|"
+        r"(?P<E_header>\\#)"
+    
     )
 
     result = []
@@ -37,12 +52,33 @@ def parse_inline(line, block_type):
 
         elif m.group("strikethru"):
             result.append({'type': 'strikethru', 'value': m.group("strikethru")})
+        
+        elif m.group("underline"):
+            result.append({'type': 'underline', 'value': m.group("underline")})
 
         elif m.group("code"):
             result.append({'type': 'code', 'value': m.group("code")})
 
         elif m.group("arrow"):
             result.append({'type': 'text', 'value':"➡"})
+        
+        elif m.group("l_url"):
+            result.append({'type': 'link', 'path':m.group("l_url"), 'value':m.group("l_text")})
+        
+        elif m.group("E_bold"):
+            result.append({'type': 'text', 'value':"**"})
+
+        elif m.group("E_underline"):
+            result.append({'type': 'text', 'value':"__"})
+        elif m.group("E_code"):
+            result.append({'type': 'text', 'value':"`"})
+        elif m.group("E_quote"):
+            result.append({'type': 'text', 'value':">"})
+
+        elif m.group("E_header"):
+            result.append({'type': 'text', 'value':"#"})
+
+        
 
         last_index = end
 
@@ -109,6 +145,13 @@ def parse(lines):
                 'level': level,
                 'content': parse_inline(clean_content, "header")
             }
+        
+        elif stripped.startswith("----"):
+            if current_block:
+                parsed_blocks.append(current_block)
+            current_block = {
+                'type': 'hr',
+            }
 
         elif stripped.startswith("-"):
             if current_block:
@@ -117,6 +160,25 @@ def parse(lines):
             current_block = {
                 'type': 'Ul_item',
                 'content': parse_inline(clean_content, "ul")
+            }
+        
+        elif stripped.startswith("[]"):
+            if current_block:
+                parsed_blocks.append(current_block)
+            clean_content = stripped[2:].lstrip()
+            current_block = {
+                'type': 'Tl_item',
+                'content': parse_inline(clean_content, "ul"),
+                'checked':False
+            }
+        elif stripped.startswith("[x]"):
+            if current_block:
+                parsed_blocks.append(current_block)
+            clean_content = stripped[3:].lstrip()
+            current_block = {
+                'type': 'Tl_item',
+                'content': parse_inline(clean_content, "ul"),
+                'checked':True
             }
 
         elif stripped.startswith(">"):

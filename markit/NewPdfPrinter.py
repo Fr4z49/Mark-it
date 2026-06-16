@@ -35,12 +35,16 @@ def register_font(font_name,file_name,folder):
 # =========================
 # TEXT BASE CLASS
 # =========================
+#c.linkURL(url="Url",rect=(x, y, w, h),relative=0)      Per i link (quadrato di cliccabilità)
+
+
 class Text:
     def __init__(self, content, font_name, font_size, line_spacing, parsed_json):
         self.content = content
         self.total_height = 0
         self.page_end = 0
 
+        #Check if font is registered
         if font_name in pdfmetrics.getRegisteredFontNames() or font_name in pdfmetrics.standardFonts:
             self.font_name = font_name
         else:
@@ -49,6 +53,7 @@ class Text:
             print(f"\033[31mUnable to use the font '{font_name}'\nDefaulting to font:'Helvetica'.\033[0m")
             print(f"\033[33mPlease check the 'Style.json' file currently in use\033[0m")
         
+        #Regular Text
         self.font_size = font_size
         self.color = "#000000"  
         self.margin_top = 0
@@ -57,12 +62,17 @@ class Text:
         self.alignment = "left"  
         self.content_width = 0   
 
+        # Inline code 
         self.code_font_name = parsed_json["inline-code"]["font-name"]
         self.code_font_size = parsed_json["inline-code"]["font-size"]
         self.code_background_color = parsed_json["inline-code"]["background"]
         self.code_color = parsed_json["inline-code"]["color"]
         self.code_bg_pad_x = parsed_json["inline-code"]["padding-x"]
         self.code_bg_pad_y = parsed_json["inline-code"]["padding-y"]
+
+        #Links
+        self.link_color = parsed_json["link"]["color"]
+        self.link_line = parsed_json["link"]["line"]
 
         self.font_height = get_font_height(font_name, font_size)
         self.line_height = self.font_height * line_spacing  
@@ -130,7 +140,7 @@ class Text:
                 print(f"\033[33mPlease import {self.font_name}-Bold inside the 'Style.json' currently in use.\033[0m")
             c.drawString(x, y - self.font_height, block["value"])
         
-        if block["type"] == "italic":
+        elif block["type"] == "italic":
             c.setFillColor(HexColor(self.color))
             try:
                 c.setFont(self.font_name + "-Oblique", self.font_size)
@@ -150,6 +160,31 @@ class Text:
             c.setStrokeColor(HexColor(self.color))
             c.setLineWidth(1)
             c.line(x, strike_y, x + text_width, strike_y)
+        
+        elif block["type"] == "underline":
+            c.setFillColor(HexColor(self.color))
+            c.setFont(self.font_name, self.font_size)
+
+            c.drawString(x, y - self.font_height, block["value"])
+            text_width = stringWidth(block["value"], self.font_name, self.font_size)
+
+            underline_y = y-self.font_size 
+            c.setStrokeColor(HexColor(self.color))
+            c.setLineWidth(1)
+            c.line(x, underline_y, x + text_width, underline_y)
+        
+        elif block["type"] == "link":
+            c.setFillColor(HexColor(self.link_color))
+            c.setFont(self.font_name, self.font_size)
+
+            c.drawString(x, y - self.font_height, block["value"])
+            text_width = stringWidth(block["value"], self.font_name, self.font_size)
+            c.linkURL(url=block["path"],rect=(x, y, x+text_width, y-self.font_height),relative=0)
+            if self.link_line:
+                underline_y = y-self.font_size 
+                c.setStrokeColor(HexColor(self.link_color))
+                c.setLineWidth(1)
+                c.line(x, underline_y, x + text_width, underline_y)
 
         elif block["type"] == "code":
             c.setFont(self.code_font_name, self.code_font_size)
@@ -262,6 +297,70 @@ class Ul_item(Text):
         
         return self.margin_top + super().render(c, x + self.margin_left + self.text_pad_l, text_y)
 
+class Tl_item(Text):
+    def __init__(self, content,checked, parsed_json):
+        font_name = parsed_json["task-list"]["font-name"]
+        font_size = parsed_json["task-list"]["font-size"]
+        line_spacing = parsed_json["task-list"].get("line-spacing", 1.2)
+        super().__init__(content, font_name, font_size, line_spacing, parsed_json)
+        self.text_pad_l = parsed_json["task-list"].get("text-pad-left", 10) * px
+        self.margin_top = parsed_json["task-list"]["margin-top"] * px
+        self.margin_left = parsed_json["task-list"]["margin-left"] * px
+        self.margin_right = parsed_json["task-list"]["margin-right"] * px
+        self.color = parsed_json["task-list"].get("color", "#000000")
+        self.checked = checked
+
+    def layout(self, page):
+        super().layout(page)
+        self.total_height = self.text_height + self.margin_top
+        return self.total_height
+    
+    def draw_check(self, c, x, y):
+        c.setStrokeColor(self.color)
+        box_height = self.font_height
+        box_x = x + self.margin_left
+        box_y = y - self.margin_top
+
+
+        c.setLineWidth(1.0)
+        radius = box_height * 0.18
+        c.roundRect(box_x, box_y - box_height, box_height, box_height, radius, fill=0, stroke=1)
+
+        if self.checked:
+            
+            from reportlab.lib.colors import HexColor as HC
+            c.setFillColor(HC("#0969da"))       # blu GitHub
+            c.setStrokeColor(HC("#0969da"))
+            c.roundRect(box_x, box_y - box_height, box_height, box_height, radius, fill=1, stroke=0)
+
+            c.setStrokeColor(HC("#ffffff"))
+            c.setLineWidth(1.4)
+            c.setLineCap(1)   # round cap
+            c.setLineJoin(1)  # round join
+
+            m = box_height
+            #Coord check
+            p1 = (box_x + m * 0.18, box_y - m * 0.48)   
+            p2 = (box_x + m * 0.40, box_y - m * 0.74)   
+            p3 = (box_x + m * 0.82, box_y - m * 0.28)
+
+            p = c.beginPath()
+            p.moveTo(*p1)
+            p.lineTo(*p2)
+            p.lineTo(*p3)
+            c.drawPath(p, fill=0, stroke=1)
+
+            c.setStrokeColor(self.color)
+            c.setLineCap(0)
+            c.setLineJoin(0)
+
+    def render(self, c, x, y):
+        text_y = y - self.margin_top
+        c.setFont(self.font_name, self.font_size)
+        c.setFillColor(HexColor(self.color))
+        self.draw_check(c,x,y)
+        
+        return self.margin_top + super().render(c, x + self.margin_left + self.text_pad_l, text_y)
 
 class Header(Text):
     def __init__(self, content, level, parsed_json):
@@ -448,6 +547,42 @@ class Image:
             height=self.height*self.size
         )
         return self.total_height 
+    
+class Hr:
+    def __init__(self,parsed_json):
+        style= parsed_json["hr"]
+        self.color = style.get("color","#ffffff")
+        self.line_width = style.get("thickness",1)
+        self.style = style.get("style","solid")
+        self.margin_top = style.get("margin-top", 0)
+        self.page_end = 0
+        self.used_y = 0
+    
+    def layout(self,page):
+        #Total Height
+        self.page_end = page.width *mm - page.margin_left
+        self.used_y = (self.line_width * px) + self.margin_top
+        return self.used_y
+
+    def render(self,c,x,y):
+
+        c.setStrokeColor(HexColor(self.color))
+        c.setLineWidth(self.line_width)
+        line_x =x 
+        line_y = y-self.margin_top
+
+        if self.style == "solid":
+            c.setDash()
+        elif self.style == "dash":
+            c.setDash(8,4)
+        elif self.style == "dot":
+            c.setDash(1,5)
+
+        c.line(line_x,line_y,self.page_end,line_y)
+        
+        c.setDash()
+
+        return self.used_y
 
 
 
@@ -486,6 +621,12 @@ def blocks_to_objects(parsed, parsed_json):
             objects.append(Blockquote(element["content"],element["special"], parsed_json))
         elif element["type"] == "Ul_item":
             objects.append(Ul_item(element["content"], parsed_json))
+        
+        elif element["type"] == "Tl_item":
+            objects.append(Tl_item(element["content"],element["checked"], parsed_json))
+        
+        elif element["type"] == "hr":
+            objects.append(Hr(parsed_json))
         
         elif element["type"] == "img":
             try:

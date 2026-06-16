@@ -54,6 +54,13 @@
     "line-color": "#ffffff"
   },
 
+  "hr":{
+    "color":"#FFFFFF",
+    "thickness":1,
+    "style":"dash",
+    "margin-top": 15
+  },
+
   "text": {
     "color": "#f0f6fc",
     "font-name": "Helvetica",
@@ -62,6 +69,11 @@
     "margin-top": 20,
     "margin-left": 15,
     "margin-right": 0
+  },
+
+  "link": {
+    "color": "#2f81f7",
+    "line": true
   },
 
   "quote": {
@@ -130,6 +142,18 @@
     "space-between":25,
     "text-pad-left":20,
     "bullet-char": "•"
+  },
+
+  "task-list": {
+    "color": "#f0f6fc", 
+    "font-name": "Helvetica",
+    "font-size": 13 ,
+    "interline": 3, 
+    "margin-left": 40,
+    "margin-right": 0,
+    "margin-top": 20,
+    "space-between":25,
+    "text-pad-left":20
   },
 
   "image":{
