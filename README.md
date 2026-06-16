@@ -1,124 +1,162 @@
-# Presentazione Mark-IT:
+# Mark-IT ver. 0.2.2
 
-## Cos'è mark-it:
-> **mark-it** è un formato di testo simile al markdown che permette di creare un pdf secondo uno stile predefinito.
-## Header multilivello:
+> A Markdown-like markup format and CLI tool for fast note-taking with direct PDF export.
 
-Markit supporta 3 livelli di header e si usano tramite il simbolo '#' con il numero del livello dell'header:
-- "#" -> titolo /H1
-- "#2" -> H2
-- "#3" -> H3
+---
 
-gli headers sono di default **in BOLD** ma si puo cambiare nel file `Style.json`, inoltre gli headers possono essere sbarrati con due underscore.
+## What is Mark-IT?
 
+Mark-IT is a lightweight markup format and CLI tool that converts `.mi` files into a single-page PDF — without going through HTML or CSS as an intermediate step.
 
-## Paragrafi:
+Most Markdown-to-PDF converters work by first converting Markdown to HTML, then rendering that HTML to PDF. This made sense historically, since Markdown was originally designed for the web.
 
-per markit, il testo normale è un paragrafo, ed in ognuno di essi è possibile avere delle "opzioni di formattazione:
+Mark-IT takes a different approach: it targets PDF directly, using a pure Python pipeline with a single external library. This unlocks layout options that HTML/CSS can't easily provide — like the continuous single-page format Mark-IT uses by default — while keeping the tool lightweight and portable.
 
-- **BOLD**: Il grassetto si utilizza avvolgendo le frasi o parole da grassettare con due asterischi
-- ~~TESTO BARRATO~~ : é possibile barrare il testo (come negli header), con avvolgendo le frasi o parole con due underscore.
-- `Codice inline`: Il codice inline è utilizzato per evidenziare del codice o testo semplice. si utilizza avvolgendo le parole o frasi con un singolo backtick.
+---
 
-## Blockquote (Citazioni):
+## Features
 
-Le citazioni creano un blocco di testo con sfondo che puo essere utilizzato per, appunto, fare delle citazioni\n si utilizza iniziando la riga con un simbolo del maggiore.
-> Questo è un esempio di citazione
+- **Direct PDF generation** — no HTML/CSS intermediate step
+- **Single long-page format** — the default layout is a continuous page, not paginated
+- **Lightweight** — the entire PDF pipeline is written in Python and requires only one library, making it easy to run directly from a USB drive
+- **Customizable** — fonts, colors, margins, and more can be configured via `style.json`
 
-## Codice multilinea:
+---
 
-Il codice multilinea permette di scrivere in un area riquadrata qualsiasi cosa senza formattazione markit, perfetto appunto per del codice.
+## Mark-IT vs Markdown
+
+Mark-IT uses a syntax inspired by Markdown, but it is a distinct format. The differences are intentional and designed for note-taking speed.
+
+### Headers
 
 ```
-Questo è un esempio
-    Di codice Multilinea!
-
-        wow!
-        **questo non diventerà mai grassetto!**
+# Header 1   (or: #1 Header 1)
+#2 Header 2
+#3 Header 3
 ```
-codice python:
+
+> Mark-IT ships with three header levels by default. More can be added in `style.json`.
+
+### Inline Formatting
+
 ```
-# Script Python: esempio con indentazione
-
-a = 5
-b = 3
-
-if a > b:
-    print("a è maggiore di b")
-    print("Dentro il blocco if")
-else:
-    print("b è maggiore o uguale ad a")
-    print("Dentro il blocco else")
-
-print("Fuori dal blocco if/else")
+Bold:      **this text is bold**
+Italic:    \\this text is italic\\
+Strikethrough: _-this text is crossed out-_
+Underline: __this text is crossed out__
+Inline code:   `this is inline code`
 ```
-## Pagine:
 
-Markit ha la peculiarità di generare una singola lunga pagina al posto di un pdf di dimensione "A4" standard. in questo modo il documento (che non è pensato per la stampa) è piu ordinato senza stacchi bruschi della pagina.
-La altezza della pagina minima puo essere specificata nel file di stile e viene usata quando il contenuto della pagina non supera l'altezza minima specificata, dopodichè la pagina si espande in base al contenuto.
+> Each formatting type has exactly one delimiter — no alternatives.
 
-## File di stile:
+### Special Blockquotes
 
-Markit usa un file con formato `JSON` per cambiare le impostazioni di stile del documento.
-Questo comprende:
-- impostazioni della pagina (colore sfondo, margini, altezza minima documento, larghezza documento)
-- impostazioni header (colore, dimensione, stile, font, margini)
-- impostazioni paragrafi (colore,font,margini, interlinea)
-- impostazioni blockquote (colore sfondo, colore testo, font e dimensione font,, colore linea laterale,margini)
-- impostazioni inline-code (colore sfondo, colore testo, font e dimesione font,)
-- impostazioni codice multilinea (colore sfondo, colore testo, font e dimensione font, margini)
+```
+>n This is a Note
+>t This is a Tip
+>i This is Important
+>w This is a Warning
+>c This is a Caution
+```
 
+### Images
 
-## Perchè markit?:
+```
+!(image_path)[size]
+```
 
->Ho deciso di sviluppare Mark-it perchè avevo bisogno di qualcosa di piu pratico per prendere appunti formattati con uno stile predefinito.
+### Important: blank lines between elements
 
->Prima di mark-it usavo dei binari di pandoc + wkhtmltopdf per generare i pdf ma cerano 4 problemi:
-1. conversione da Markdown a PDF:
-    >Il file markdown non viene trasformato direttamente in pdf, ma viene trasformato prima in un HTML, ad esso gli viene allegato un file di stile "css" con pandoc e poi viene trasformato in pdf con wkhtmltopdf.
-    >questo perchè markdown è un formato che era stato ideato per l'uso nei siti web per creare documentazioni (come su GitHub, nei readme), non per prendere appunti e trasformarli in PDF.
+You **must** leave a blank line between different types of elements (paragraphs, blockquotes, lists, etc.). Without it, the content will be treated as a continuation of the previous element.
 
-2. Binari statici e librerie:
-    >Pandoc e wkhtmltopdf non possono funzionare da soli, infatti dipendono da diverse librerie che non sono leggere. inoltre essendo che avevo bisogno di una soluzione portatile (che deve funzionare indipendentemente dal pc), avevo bisogno di uno script bash che dice di lanciare i due programmi con le librerie che sono sulla chiavetta, e non era per niente comodo.
+---
 
-3. Le interruzioni di pagina:
-    > la "goccia che ha fatto traboccare il vaso" per me sono state le interruzioni di pagina.\nNon riuscivo a trovare un programma che mi lasciasse fare una singola lunga pagina che si adatta al contenuto e che fosse allo stesso tempo una soluzione portatile
+## Installation
 
-4. Sicurezza e fragilià:
-    >Eseguire dei programmi che non sono installati su una macchina è un pericolo per la sicurezza e generalmente non adrebbe fatto, python invece è generalmente piu "innocuo" e sicuro da usare, in piu, quasi tutte le macchine linux hanno di default un interprete python.
+### From Source (Linux, macOS, Windows)
 
+```bash
+# 1. Clone the beta branch
+git clone --branch beta --single-branch https://github.com/Fr4z49/Mark-it.git
+cd Mark-it
 
-soluzione... Python!:
+# 2. Create and activate a virtual environment
+python3 -m venv venv
+source venv/bin/activate          # Linux/macOS
+# venv\Scripts\Activate.ps1       # Windows (PowerShell)
 
->Python è il linguaggio che stiamo imparando a scuola e il problema lo ho trasformato in una possibilità per ampliare le mie conoscienze nel linguaggio ed anche per crearmi una sfida personale.
+# 3. Install dependencies
+pip install -r requirements.txt
 
+# 4. Run Mark-IT
+python main.py
+```
 
-## Usare Mark-it (Linux): 
+### Arch Linux (AUR)
 
-- Clona il repository:
-    ```
-    git clone https://www.github.com/Fr4z49/Mark-it
-    cd Mark-it
-    ```
-- crea la virtual env:
+```bash
+yay -S markit-git
+```
 
-    ```
-    python -m venv venv
-    ```
-- Attiva la venv:
+---
 
-    ```
-    source ./venv/bin/activate
-    ```
-- Installa le dipendenze con pip:
+## Usage
 
-    ```
-    pip install -r requirements.txt
-    ```
-- Avvia markit!:
+### AUR installation
 
-    ```
-    ./markit.py input.mi [-o output.pdf] [-s style.json]
-    ```
+```
+markit input.mi [-o output] [-s style] [-r]
+```
 
+### Portable (from the Mark-IT folder)
+
+```bash
+python3 markit.py input.mi [-o output] [-s style]
+```
+
+On Linux you can also run it directly:
+
+```bash
+./markit.py input.mi [-o output] [-s style]
+```
+
+| Flag | Description |
+| :--- | :---------- |
+| `-o output` | Output file path (defaults to input filename with `.pdf` extension) |
+| `-s style` | Path to a custom `style.json` file |
+| `-r` | Reset configuration to defaults (AUR only) |
+
+---
+
+## Configuration
+
+Mark-IT is configured via `style.json`. Depending on your installation:
+
+| Installation | Config location |
+| :----------- | :-------------- |
+| AUR | `~/.config/mark-it/` |
+| Portable | `Mark-it/markit/config/` |
+
+Options include margins, colors, font sizes, and custom font imports. The default config file is well-commented and self-explanatory.
+
+---
+
+## Feature Status
+
+| Feature               | Status                                      |
+| :-------------------- | :------------------------------------------ |
+| Inline formatting     | Working (nesting not supported yet)         |
+| Headers               | Working                                     |
+| Blockquotes           | Working                                     |
+| Multiline code blocks | Working                                     |
+| Unordered lists       | Working (nested lists not supported yet)    |
+| Task lists            | Working (nested lists not supported yet)    |
+| Paragraphs            | Working                                     |
+| Links                 | Working                                     |
+| Horizontal separators | Working                                     |
+| Images                | Partial                                     |
+| Character escapes     | Partial                                     |
+| Tables                | Work in progress                            |
+| Ordered lists         | Not implemented yet                         |
+| Footnotes             | Not implemented yet                         |
 
