@@ -1,4 +1,4 @@
-# Mark-IT ver. 0.2.2
+# Mark-IT ver. 0.2.3
 
 > A Markdown-like markup format and CLI tool for fast note-taking with direct PDF export.
 
@@ -149,8 +149,8 @@ Options include margins, colors, font sizes, and custom font imports. The defaul
 | Headers               | Working                                     |
 | Blockquotes           | Working                                     |
 | Multiline code blocks | Working                                     |
-| Unordered lists       | Working (nested lists not supported yet)    |
-| Task lists            | Working (nested lists not supported yet)    |
+| Unordered lists       | Working                                     |
+| Task lists            | Working                                     |
 | Paragraphs            | Working                                     |
 | Links                 | Working                                     |
 | Horizontal separators | Working                                     |

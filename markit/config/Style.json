@@ -77,8 +77,8 @@
   },
 
   "quote": {
-    "color": "#adbac7",
-    "background": "#22272e",
+    "color": "#C7C7C7",
+    "background": "#191D22",
     "line-color": "#444c56",
 
     "color-note": "#adbac7",
@@ -112,18 +112,18 @@
 
   "inline-code": {
     "color": "#f0f6fc",
-    "background": "#1e242a",
+    "background": "#2B3036",
     "font-name": "Helvetica-Bold",
     "font-size": 10,
-    "padding-x": 2,
-    "padding-y": 2
+    "padding-x": 3,
+    "padding-y": 2.5
   },
 
   "multiline-code": {
     "color": "#f0f6fc",
     "background": "#151b23", 
     "font-name": "Helvetica",
-    "font-size": 13 ,
+    "font-size": 11 ,
     "margin-left": 30,
     "margin-right": 0,
     "margin-top": 25,
@@ -131,17 +131,24 @@
     "padding-x":15
   },
 
+  "list-block": {
+    "interline": 3, 
+    "margin-left": 40,
+    "margin-right": 0,
+    "margin-top": 20,
+    "space-between":10,
+    "indent-width": 40
+  },
+
   "unordered-list": {
     "color": "#f0f6fc", 
     "font-name": "Helvetica",
     "font-size": 13 ,
     "interline": 3, 
-    "margin-left": 40,
-    "margin-right": 0,
-    "margin-top": 20,
-    "space-between":25,
+    "margin-left": 0,
     "text-pad-left":20,
     "bullet-char": "•"
+    
   },
 
   "task-list": {
@@ -149,10 +156,7 @@
     "font-name": "Helvetica",
     "font-size": 13 ,
     "interline": 3, 
-    "margin-left": 40,
-    "margin-right": 0,
-    "margin-top": 20,
-    "space-between":25,
+    "margin-left": 0,
     "text-pad-left":20
   },
 

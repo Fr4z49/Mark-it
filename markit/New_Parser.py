@@ -6,7 +6,7 @@ except ImportError:
     import NewPdfPrinter
 
 def parse_inline(line, block_type):
-    #line = line.replace("\t", "   ")
+    line = line.replace("\t", "   ")
 
     pattern = re.compile(
         r"\*\*(?P<bold>.+?)\*\*"
@@ -95,6 +95,8 @@ def parse(lines):
     for line in lines:
         # 1. Gestione Blocco Multiline Code attivo
         line = line.replace("\t", "    ")
+
+        raw_line = line.replace("    ", "\t")
         if current_block and current_block['type'] == 'Multiline_code':
             if line.lstrip().startswith("```"):
                 # Rimuove l'ultimo newline superfluo prima di chiudere
@@ -119,6 +121,7 @@ def parse(lines):
         stripped = line.lstrip()
         img_match = re.fullmatch(r'!\((.*?)\)\[(\d+)\]', stripped)
         table_row_match = re.findall(r"(?<=\|)[^|]+(?=\|)", stripped)
+        list_match = re.match(r"^(\t*)(-|\[[ xX]?\])\s+(.*)", raw_line)
 
         # 3. Riconoscimento inizio Nuovi Blocchi
         if stripped.startswith("```"):
@@ -152,34 +155,37 @@ def parse(lines):
             current_block = {
                 'type': 'hr',
             }
-
-        elif stripped.startswith("-"):
-            if current_block:
-                parsed_blocks.append(current_block)
-            clean_content = stripped[1:].lstrip()
-            current_block = {
-                'type': 'Ul_item',
-                'content': parse_inline(clean_content, "ul")
-            }
         
-        elif stripped.startswith("[]"):
-            if current_block:
-                parsed_blocks.append(current_block)
-            clean_content = stripped[2:].lstrip()
-            current_block = {
-                'type': 'Tl_item',
-                'content': parse_inline(clean_content, "ul"),
-                'checked':False
-            }
-        elif stripped.startswith("[x]"):
-            if current_block:
-                parsed_blocks.append(current_block)
-            clean_content = stripped[3:].lstrip()
-            current_block = {
-                'type': 'Tl_item',
-                'content': parse_inline(clean_content, "ul"),
-                'checked':True
-            }
+    
+        # --------- Vecchia parte degli elenchi ----------
+
+        # elif stripped.startswith("-"):
+        #     if current_block:
+        #         parsed_blocks.append(current_block)
+        #     clean_content = stripped[1:].lstrip()
+        #     current_block = {
+        #         'type': 'Ul_item',
+        #         'content': parse_inline(clean_content, "ul")
+        #     }
+        
+        # elif stripped.startswith("[]"):
+        #     if current_block:
+        #         parsed_blocks.append(current_block)
+        #     clean_content = stripped[2:].lstrip()
+        #     current_block = {
+        #         'type': 'Tl_item',
+        #         'content': parse_inline(clean_content, "ul"),
+        #         'checked':False
+        #     }
+        # elif stripped.startswith("[x]"):
+        #     if current_block:
+        #         parsed_blocks.append(current_block)
+        #     clean_content = stripped[3:].lstrip()
+        #     current_block = {
+        #         'type': 'Tl_item',
+        #         'content': parse_inline(clean_content, "ul"),
+        #         'checked':True
+        #     }
 
         elif stripped.startswith(">"):
             if current_block:
@@ -201,7 +207,36 @@ def parse(lines):
                 'content': parse_inline(clean_content, "blockquote")
             }
 
-                   
+        elif list_match:
+            if line.startswith("    "):
+                line = line.replace("    ","\t")
+            indent = len(list_match.group(1))
+            marker = list_match.group(2)
+            clean_content = list_match.group(3)
+
+            if marker == "-":
+                item_type = "Ul"
+                item = {
+                    'type': 'Ul',
+                    'value': parse_inline(clean_content, "ul"),
+                    'indent': indent
+                }
+            else:
+                checked = marker.lower() == "[x]"
+                item = {
+                    'type': 'Tl',
+                    'value': parse_inline(clean_content, "ul"),
+                    'indent': indent,
+                    'checked': checked
+                }
+
+            if not current_block or current_block.get('type') != 'list':
+                if current_block:
+                    parsed_blocks.append(current_block)
+                current_block = {'type': 'list', 'content': []}
+
+            current_block['content'].append(item)
+
 
         elif img_match:
             if current_block:
@@ -256,7 +291,7 @@ def main(document,output_path,style_path,font_path):
         lines = file.read().split("\n")
 
     parsed = parse(lines)
-    #print(parsed)
+    print(parsed)
     NewPdfPrinter.main(parsed,output_path,style_path,font_path)
 
 if __name__ == "__main__":
