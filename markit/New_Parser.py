@@ -291,7 +291,7 @@ def main(document,output_path,style_path,font_path):
         lines = file.read().split("\n")
 
     parsed = parse(lines)
-    print(parsed)
+    #print(parsed)
     NewPdfPrinter.main(parsed,output_path,style_path,font_path)
 
 if __name__ == "__main__":
