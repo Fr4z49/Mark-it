@@ -163,7 +163,7 @@ class Text:
         if block["type"] == "bold":
             c.setFillColor(HexColor(self.color))
             try:
-                if not self.bold_font_name: self.bold_font_name = self.font_name if self.font_name.endswith("-Bold") else self.font_name + "-Bold"
+                
                 c.setFont(self.bold_font_name, self.font_size)
             except KeyError:
                 c.setFont("Helvetica-Bold", self.font_size)
@@ -175,7 +175,7 @@ class Text:
             c.setFillColor(HexColor(self.color))
             
             try:
-                if not self.oblique_font_name: self.oblique_font_name = self.font_name if self.font_name.endswith("-Oblique") else self.font_name + "-Oblique"
+                
                 c.setFont(self.oblique_font_name, self.font_size)
             except KeyError:
                 c.setFont("Helvetica-Oblique", self.font_size)
@@ -274,6 +274,8 @@ class Text:
         return initial_y - y
 
     def layout(self, page, extra=0):
+        if not self.bold_font_name: self.bold_font_name = self.font_name if self.font_name.endswith("-Bold") else self.font_name + "-Bold"
+        if not self.oblique_font_name: self.oblique_font_name = self.font_name if self.font_name.endswith("-Oblique") else self.font_name + "-Oblique"
         self.content_width = page.content_width + extra
         self.word_wrap(page)
         self.text_height = self.line_height * len(self.lines)
