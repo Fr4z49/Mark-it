@@ -68,8 +68,8 @@ Inline code:   `this is inline code`
 ### Tables
 
 ```
-|riga1|cella2|cella3|
-|riga2|cella2|cella3|
+|row1|cell2|cell3|
+|row2|cell2|cell3|
 ```
 > Tables are Still buggy and can go outside the page if they're too long.
 
