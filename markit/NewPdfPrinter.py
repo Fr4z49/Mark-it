@@ -74,7 +74,9 @@ class Text:
         self.font_height = get_font_height(font_name, font_size)
         self.line_height = self.font_height * line_spacing  
         self.word_width = 0
+        self.avail_width = 0
         self.lines = []
+
     def _merge_segments(self):
         """
         Dopo il word-wrap, parole consecutive dello stesso segmento originale
@@ -100,10 +102,14 @@ class Text:
         self.lines = merged_lines
         
     def word_wrap(self, page):
-        avail_width = page.content_width - self.margin_left - self.margin_right
+        if self.avail_width == 0:
+            self.avail_width = page.content_width - self.margin_left - self.margin_right
+        else:
+            self.avail_width = 60
+
         current_line = []
         current_width = 0
-        self.page_end = avail_width
+        self.page_end = self.avail_width
 
         for segment in self.content:
             seg_type = segment["type"]
@@ -125,7 +131,7 @@ class Text:
             else:
                 seg_width = stringWidth(text, self.font_name, self.font_size)
 
-            if current_width + seg_width <= avail_width:
+            if current_width + seg_width <= self.avail_width:
                 current_line.append(segment)
                 current_width += seg_width
             else:
@@ -139,7 +145,7 @@ class Text:
                     else:
                         self.word_width = stringWidth(value, self.font_name, self.font_size)
 
-                    if current_width + self.word_width > avail_width:
+                    if current_width + self.word_width > self.avail_width:
                         self.lines.append(current_line)
                         current_line = []
                         current_width = 0
@@ -151,6 +157,7 @@ class Text:
             self.lines.append(current_line)
 
         self._merge_segments()
+        return self.lines
 
     def render_formatted(self, c, x, y, block):
         if block["type"] == "bold":
@@ -356,6 +363,7 @@ class Ul_item(Text):
     def layout(self, page):
         super().layout(page)
         self.total_height = self.text_height
+        self.avail_width -= self.text_pad_l
         return self.total_height
 
     def render(self, c, x, y):
@@ -559,9 +567,6 @@ class Blockquote(Text):
         super().render(c, x + self.margin_left + (self.padding_x / 2), y - self.margin_top - self.padding_y / 2)
         return self.total_height
 
-class Table(Text):
-    def __init__(self):
-        pass 
 
 
 # =========================
@@ -623,6 +628,181 @@ class Hr:
         c.setDash()
         return self.used_y
 
+class Table_cell(Text):
+    def __init__(self,content, parsed_json):
+        self.style = parsed_json["table-cell"]
+        font_name = self.font_name = self.style.get("font-name", "Helvetica")
+        font_size = self.font_size = self.style.get("font-size", 10)
+        line_spacing = self.style.get("line-spacing", 1.2)
+        super().__init__(content,font_name,font_size,line_spacing,parsed_json)
+        
+        self.padding_x = self.style.get("padding-x",15)
+        self.padding_y = self.style.get("padding-y",15)
+        self.color = self.style.get("color","#FFFFFF")
+        self.background_color = self.style.get("background-color","#000000")
+        self.border_color = self.style.get("border-color","#ffffff")
+        self.border = self.style.get("border-thickness") * px
+        self.vertical_alignment = self.style.get("vertical-alignment","center")
+        self.horizontal_alignment = self.style.get("horizontal-alignment","left")
+        self.cell_size = self.style.get("cell-size","min")
+
+        self.content = content
+        self.cell_height = 0
+        self.cell_width = 0
+        self.texts = []
+    
+    class FakePage:
+        def __init__(self,page):
+            self.content_width = page.content_width
+    
+    def word_wrap(self, page):
+        self.content = super().word_wrap(page)
+        # print(self.content)
+        # print()
+
+    def layout(self,page):
+        fakepage = self.FakePage(page)
+        fakepage.content_width = page.content_width
+
+        self.word_wrap(fakepage)
+        self.cell_height = (self.font_height * len(self.content)) + 2*self.padding_y
+
+        line_widths = []
+        for row in self.content:
+            line_width = sum(
+                stringWidth(
+                    item['value'],
+                    self.bold_font_name if item['type'] == 'bold' and self.bold_font_name else self.font_name,
+                    self.font_size
+                )
+                for item in row
+            )
+            line_widths.append(line_width)
+
+        self.cell_width = max(line_widths) + 2*self.padding_x
+
+        return self.cell_height
+    
+    def render(self,c,x,y):
+        
+        c.setStrokeColor(HexColor(self.border_color))
+        c.setFillColor(HexColor(self.background_color))
+        c.setLineWidth(self.border)
+        c.rect(x,y-self.cell_height,self.cell_width,self.cell_height, stroke = 1 if self.border>0 else 0, fill=1)
+
+        # --- allineamento verticale (come prima) ---
+        text_height = self.font_height * len(self.content)
+        extra_space = max(0, self.cell_height - text_height - 2*self.padding_y)
+
+        if self.vertical_alignment == "top":
+            y_offset = self.padding_y
+        elif self.vertical_alignment == "bottom":
+            y_offset = self.padding_y + extra_space
+        else:  # center
+            y_offset = self.padding_y + extra_space / 2
+
+        # --- allineamento orizzontale: larghezza della riga più lunga, non la somma di tutte le parole ---
+        line_widths = [
+            stringWidth(" ".join(item['value'] for item in row), self.font_name, self.font_size)
+            for row in self.content
+        ]
+        text_width = max(line_widths) if line_widths else 0
+
+        if self.horizontal_alignment == "center":
+            x_offset = (self.cell_width - text_width) / 2
+        elif self.horizontal_alignment == "right":
+            x_offset = self.cell_width - text_width - self.padding_x
+        else:  # left (default)
+            x_offset = self.padding_x
+
+        super().render(c, x+x_offset, y-y_offset)
+
+        return self.cell_width, self.cell_height
+        
+
+    
+
+class Table_row:
+    def __init__(self,content,parsed_json):
+        self.cells = self.create_cells_obj(content,parsed_json)
+    
+    def create_cells_obj(self,content, parsed_json):
+        cell_objs = []
+        for cell in content:
+            cell_objs.append(Table_cell(cell, parsed_json))
+        return cell_objs
+    
+    def layout(self,page):
+        max_cell_height = 0
+        for cell in self.cells:
+            cell_height = cell.layout(page)
+            max_cell_height = max(max_cell_height, cell_height)
+        for cell in self.cells:
+            cell.cell_height = max_cell_height
+        return max_cell_height
+    
+    def render(self,c,x,y):
+        x_shift = 0
+        y_shift = 0
+        for cell in self.cells:
+            delta_x , delta_y = cell.render(c,x+x_shift,y-y_shift) 
+            x_shift += delta_x
+
+        y_shift = delta_y
+
+        return  y_shift #Boom! esplode tutto in una sola riga di codice
+
+class Table:
+    def __init__(self,content,parsed_json):
+        self.style = parsed_json["table"]
+        self.margin_top = self.style.get("margin-top", 25)
+        self.margin_left = self.style.get("margin-left",0)
+        self.maring_right = self.style.get("margin-right",0)
+        self.rows = self.create_rows_objs(content,parsed_json)
+        self.total_height = 0
+
+    def layout(self,page):
+        self.total_height = 0
+        # 1° passaggio: layout di ogni riga (calcola cell_width/cell_height "intrinseci"
+        #               e già sincronizza le altezze all'interno della riga)
+        for row in self.rows:
+            self.total_height += row.layout(page)
+
+        # 2° passaggio: sincronizza le larghezze per colonna, su TUTTE le righe
+        self.normalize_column_widths()
+
+        return self.total_height
+
+    def normalize_column_widths(self):
+        if not self.rows:
+            return
+
+        num_columns = max(len(row.cells) for row in self.rows)
+
+        # calcola la larghezza massima per ogni colonna
+        column_widths = [0] * num_columns
+        for row in self.rows:
+            for col_idx, cell in enumerate(row.cells):
+                column_widths[col_idx] = max(column_widths[col_idx], cell.cell_width)
+
+        # riapplica la larghezza massima a tutte le celle della stessa colonna
+        for row in self.rows:
+            for col_idx, cell in enumerate(row.cells):
+                cell.cell_width = column_widths[col_idx]
+
+    def render(self,c,x,y):
+        y_shift = 0
+        for row in self.rows:
+            y_shift = row.render(c,x+self.margin_left,y- y_shift- self.margin_top)
+        return self.total_height + self.margin_top
+
+    def create_rows_objs(self,content,parsed_json):
+        rows_objs = []
+        for row in content:
+            rows_objs.append(Table_row(row,parsed_json))
+        
+        return rows_objs
+
 
 # =========================
 # PAGE
@@ -657,6 +837,8 @@ def blocks_to_objects(parsed, parsed_json):
             objects.append(Blockquote(element["content"], element["special"], parsed_json))
         elif element["type"] == "list":
             objects.append(List(element["content"], parsed_json))
+        elif element["type"] == "table":
+            objects.append(Table(element["content"], parsed_json))
         elif element["type"] == "hr":
             objects.append(Hr(parsed_json))
         elif element["type"] == "img":

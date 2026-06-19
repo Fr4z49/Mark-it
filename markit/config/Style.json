@@ -160,6 +160,29 @@
     "text-pad-left":20
   },
 
+  "table": {
+    "margin-top":25,
+    "margin-left":30,
+    "margin-right":0
+
+
+  },
+  "table-cell":{
+    "padding-y":5,
+    "padding-x":5,
+    "font-name":"Helvetica",
+    "font-size":15,
+    "border-thickness":2,
+    "color":"#e6edf3",
+    "border-color":"#3d444d",
+    "background-color":"#151b23",
+    "vertical-alignment":"center",
+    "horizontal-alignment":"center"
+    
+
+  },
+
+
   "image":{
     "margin-left":25,
     "margin-top":25

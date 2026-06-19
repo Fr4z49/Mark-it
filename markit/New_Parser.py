@@ -120,8 +120,8 @@ def parse(lines):
 
         stripped = line.lstrip()
         img_match = re.fullmatch(r'!\((.*?)\)\[(\d+)\]', stripped)
-        table_row_match = re.findall(r"(?<=\|)[^|]+(?=\|)", stripped)
         list_match = re.match(r"^(\t*)(-|\[[ xX]?\])\s+(.*)", raw_line)
+        table_match = re.match(r'^\|(?:[^|]+\|)+$',stripped)
 
         # 3. Riconoscimento inizio Nuovi Blocchi
         if stripped.startswith("```"):
@@ -187,6 +187,7 @@ def parse(lines):
         #         'checked':True
         #     }
 
+
         elif stripped.startswith(">"):
             if current_block:
                 parsed_blocks.append(current_block)
@@ -236,7 +237,26 @@ def parse(lines):
                 current_block = {'type': 'list', 'content': []}
 
             current_block['content'].append(item)
+        
+        elif table_match:
+            #print("esecuzione")
+            cell_match = re.findall(r'(?<=\|)[^|]*(?=\|)', stripped)
+            inline_parsed_rows = []
+            for cell in cell_match:
+                inline_parsed_rows.append(parse_inline(cell,"placeholder"))
 
+            if current_block:
+                current_block["content"].append(inline_parsed_rows)                
+
+            if not current_block or current_block.get('type') != 'table':
+                if current_block:
+                    parsed_blocks.append(current_block)
+                current_block = {'type': 'table', 'content': [inline_parsed_rows]}
+
+            #print(current_block)
+
+
+        
 
         elif img_match:
             if current_block:
@@ -249,21 +269,6 @@ def parse(lines):
                 'size': int(img_match.group(2))
             })
         
-        elif table_row_match:
-            # crea tabella se non esiste
-            if not current_block or current_block.get('type') != 'table':
-                if current_block:
-                    parsed_blocks.append(current_block)
-
-                current_block = {
-                    'type': 'table',
-                    'rows': []
-                }
-
-            current_block['rows'].append({
-                'type': 'table_row',
-                'content': table_row_match
-            })
 
         # 4. Linea di testo normale (o continuazione del blocco precedente)
         else:

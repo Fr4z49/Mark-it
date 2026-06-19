@@ -1,4 +1,4 @@
-# Mark-IT ver. 0.2.3
+# Mark-IT ver. 0.2.4
 
 > A Markdown-like markup format and CLI tool for fast note-taking with direct PDF export.
 
@@ -64,6 +64,14 @@ Inline code:   `this is inline code`
 ```
 !(image_path)[size]
 ```
+
+### Tables
+
+```
+|riga1|cella2|cella3|
+|riga2|cella2|cella3|
+```
+> Tables are Still buggy and can go outside the page if they're too long.
 
 ### Important: blank lines between elements
 
@@ -156,7 +164,7 @@ Options include margins, colors, font sizes, and custom font imports. The defaul
 | Horizontal separators | Working                                     |
 | Images                | Partial                                     |
 | Character escapes     | Partial                                     |
-| Tables                | Work in progress                            |
+| Tables                | Partial                                     |
 | Ordered lists         | Not implemented yet                         |
 | Footnotes             | Not implemented yet                         |
 
