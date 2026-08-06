@@ -11,6 +11,11 @@ from reportlab.pdfbase.ttfonts import TTFError
 
 import json
 
+try:
+    from . import JsonLoader
+except ImportError:
+    import JsonLoader
+
 px = 0.75
 
 
@@ -66,6 +71,13 @@ class Text:
         self.code_color            = inline.get("color", "#f0f6fc")
         self.code_bg_pad_x         = inline.get("padding-x", 2)
         self.code_bg_pad_y         = inline.get("padding-y", 2)
+
+        highlight = parsed_json.get("highlighted-text")
+
+        self.highlight_color = highlight.get("color","#000000")
+        self.highlight_background_color = highlight.get("background","#ffff00")
+        self.highlight_pad_x = highlight.get("padding-x",2)
+        self.highlight_pad_y = highlight.get("padding-y",2)
 
         link = parsed_json.get("link", {})
         self.link_color = link.get("color", "#2f81f7")
@@ -236,6 +248,20 @@ class Text:
             )
             c.setFillColor(HexColor(self.code_color))
             c.drawString(x + self.code_bg_pad_x, y + 1 - self.font_height, block["value"])
+        
+        elif block["type"] == "highlight":
+            c.setFont(self.font_name, self.font_size)
+            text_width = stringWidth(block["value"], self.font_name, self.font_size)
+            code_height = get_font_height(self.font_name, self.font_size)
+            c.setFillColor(HexColor(self.highlight_background_color))
+            line_height = (self.line_height-code_height)
+            c.rect(
+                x,
+                y -self.font_height -1,
+                text_width + self.highlight_pad_x * 2, self.font_height,stroke=0, fill=1
+            )
+            c.setFillColor(HexColor(self.highlight_color))
+            c.drawString(x + self.highlight_pad_x, y - self.font_height, block["value"])
 
     def render(self, c, x, y):
         initial_y = y
@@ -868,6 +894,8 @@ def get_page_height(objects, page):
 
 
 def LoadJson(path):
+    JsonLoader.main(path)
+    
     with open(path, "r") as f:
         return json.load(f)
 
@@ -881,6 +909,7 @@ def render(c, objects, page):
 
 
 def main(parsed_file, output_path, style_path, font_path):
+    
     parsed_json = LoadJson(style_path)
     PAGE = parsed_json.get("page", {})
     page = Page(

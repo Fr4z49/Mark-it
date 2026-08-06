@@ -15,6 +15,8 @@ def parse_inline(line, block_type):
         r"|"
         r"\_\_(?P<underline>.+?)\_\_"
         r"|"
+        r"\=\=(?P<highlight>.+?)\=\="
+        r"|"
         r"\\\\(?P<italic>.+?)\\\\"
         r"|"
         r"`(?P<code>.+?)`"
@@ -55,6 +57,9 @@ def parse_inline(line, block_type):
         
         elif m.group("underline"):
             result.append({'type': 'underline', 'value': m.group("underline")})
+        
+        elif m.group("highlight"):
+            result.append({'type': 'highlight', 'value': m.group("highlight")})
 
         elif m.group("code"):
             result.append({'type': 'code', 'value': m.group("code")})
