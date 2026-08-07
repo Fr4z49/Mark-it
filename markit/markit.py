@@ -62,6 +62,11 @@ def main():
     
     Usa ~/.config/mark-it/ come cartella di lavoro principale.
     """
+    if args.output is None:
+            args.output = args.input + ".pdf"
+    elif not args.output.lower().endswith(".pdf"):
+        args.output += ".pdf"
+
     args = parse_arguments()
 
     # Directory sorgente interna al pacchetto e destinazione in ~/.config
