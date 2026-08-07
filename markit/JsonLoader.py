@@ -2,7 +2,8 @@ import copy
 import json
 import os
 
-ReferenceJson = {   'page': {  'background': '#0d1117',
+ReferenceJson = {   "settings": {"default-output-path": ""},
+                    'page': {  'background': '#0d1117',
                             'margin-top': 0, 
                             'margin-bottom': 15, 
                             'margin-left': 10, 

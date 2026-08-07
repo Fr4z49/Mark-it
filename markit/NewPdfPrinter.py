@@ -1,3 +1,7 @@
+import os,sys
+libs = os.path.join(os.path.dirname(__file__), 'lib')
+sys.path.insert(0, libs)
+
 from reportlab.pdfgen import canvas
 from reportlab.pdfbase import pdfmetrics
 from reportlab.lib.units import mm
@@ -290,6 +294,8 @@ class Text:
 
                 if block["type"] == "code":
                     line_x += stringWidth(block["value"], self.code_font_name, self.code_font_size) + self.code_bg_pad_x * 2
+                elif block["type"] == "highlight":
+                    line_x += stringWidth(block["value"], self.font_name, self.font_size) + self.highlight_pad_x * 2
                 elif block["type"] == "bold":
                     line_x += stringWidth(block["value"], self.bold_font_name  , self.font_size)
                 else:

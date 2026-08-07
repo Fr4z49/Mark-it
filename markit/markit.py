@@ -3,7 +3,11 @@
 import argparse
 import os
 import shutil
+import json
 from pathlib import Path
+
+
+jsonfile = ""
 
 try:
     from . import New_Parser
@@ -15,23 +19,33 @@ def parse_arguments():
     parser = argparse.ArgumentParser()
 
     parser.add_argument("input")
-    parser.add_argument("-o", "--output")
+    parser.add_argument("-o", "--output") #ora diventa il path
+    parser.add_argument("-n", "--name")   #Ora è solo il nome del file in output
     parser.add_argument("-s", "--style")
     parser.add_argument("-r", "--reset", action="store_true", help="Ripristina gli stili predefiniti")
 
     args = parser.parse_args()
 
+
+    fileName = os.path.basename(args.input).strip(".mi") #contiene solo il nome del file di input
+    #print(fileName)
+
+
     # Correzione automatica delle estensioni
-    if args.output is None:
-        args.output = args.input + ".pdf"
-    elif not args.output.lower().endswith(".pdf"):
-        args.output += ".pdf"
+
+
+    if args.name is None:
+        args.name = fileName + ".pdf"
+    elif not args.name.lower().endswith(".pdf"):
+        args.name += ".pdf"
 
     if not args.input.lower().endswith(".mi"):
         args.input += ".mi"
 
     if args.style and not args.style.lower().endswith(".json"):
         args.style += ".json"
+
+
 
     return args
 
@@ -89,6 +103,9 @@ def portable():
     local_config_dir = script_dir / "config"
     font_path = local_config_dir / "fonts"
     local_style_default = local_config_dir / "Style.json"
+    root_dir = Path(__file__).resolve().parents[2]   # due livelli sopra
+    print(root_dir)
+
 
     # Gestione dello stile
     if args.style is None:
@@ -102,6 +119,18 @@ def portable():
 
     if args.reset:
         print("Modalità Portable: il flag --reset non ha effetto poiché si usano i file locali.")
+
+    with open(args.style,"r") as f:
+        jsonfile = json.load(f)
+
+    if jsonfile["settings"]["default-output-path"]:
+
+        args.output = str(root_dir / jsonfile["settings"]["default-output-path"] / args.name)
+    else:
+        if args.output is None:
+            args.output = args.input + ".pdf"
+        elif not args.output.lower().endswith(".pdf"):
+            args.output += ".pdf"
 
     execute_parser(args, font_path)
 
