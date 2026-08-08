@@ -241,17 +241,20 @@ class Text:
             c.setFont(self.code_font_name, self.code_font_size)
             text_width = stringWidth(block["value"], self.code_font_name, self.code_font_size)
             code_height = get_font_height(self.code_font_name, self.code_font_size)
+            baseline_y = y - self.font_height  # baseline allineata al testo circostante, non al font del code
+
             c.setFillColor(HexColor(self.code_background_color))
             radius = 5*px
             c.roundRect(
                 x,
-                y - self.code_bg_pad_y/2 - self.line_spacing - code_height,
-                text_width + self.code_bg_pad_x *2 ,
-                code_height + self.code_bg_pad_y ,radius,
+                baseline_y - self.code_bg_pad_y/2,
+                text_width + self.code_bg_pad_x * 2,
+                code_height + self.code_bg_pad_y,
+                radius,
                 stroke=0, fill=1
             )
             c.setFillColor(HexColor(self.code_color))
-            c.drawString(x + self.code_bg_pad_x, y + 1 - code_height, block["value"]) #questo E' corretto
+            c.drawString(x + self.code_bg_pad_x, baseline_y+self.code_bg_pad_y/2, block["value"])
         
         elif block["type"] == "highlight":
             c.setFont(self.font_name, self.font_size)
