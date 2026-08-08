@@ -57,7 +57,7 @@ class Text:
             self.font_name = "Helvetica"
             print(f"\033[31mUnable to use the font '{font_name}'\nDefaulting to font:'Helvetica'.\033[0m")
             print(f"\033[33mPlease check the 'Style.json' file currently in use\033[0m")
-        
+        self.line_spacing = line_spacing
         self.font_size = font_size
         self.color = "#000000"  
         self.margin_top = 0
@@ -245,27 +245,28 @@ class Text:
             radius = 5*px
             c.roundRect(
                 x,
-                y - self.code_bg_pad_y - self.font_height,
-                text_width + self.code_bg_pad_x * 2,
-                code_height + self.code_bg_pad_y * 2,radius,
+                y - self.code_bg_pad_y/2 - self.line_spacing - code_height,
+                text_width + self.code_bg_pad_x *2 ,
+                code_height + self.code_bg_pad_y ,radius,
                 stroke=0, fill=1
             )
             c.setFillColor(HexColor(self.code_color))
-            c.drawString(x + self.code_bg_pad_x, y + 1 - self.font_height, block["value"])
+            c.drawString(x + self.code_bg_pad_x, y + 1 - code_height, block["value"]) #questo E' corretto
         
         elif block["type"] == "highlight":
             c.setFont(self.font_name, self.font_size)
             text_width = stringWidth(block["value"], self.font_name, self.font_size)
-            code_height = get_font_height(self.font_name, self.font_size)
+            text_height = get_font_height(self.font_name, self.font_size)
             c.setFillColor(HexColor(self.highlight_background_color))
-            line_height = (self.line_height-code_height)
+            line_height = (self.line_height-text_height)
             c.rect(
                 x,
-                y -self.font_height -1,
-                text_width + self.highlight_pad_x * 2, self.font_height,stroke=0, fill=1
+                y - self.highlight_pad_y/2 -self.line_spacing - text_height  ,
+                text_width + self.highlight_pad_x * 2, 
+                text_height + self.highlight_pad_y ,stroke=0, fill=1
             )
             c.setFillColor(HexColor(self.highlight_color))
-            c.drawString(x + self.highlight_pad_x, y - self.font_height, block["value"])
+            c.drawString(x + self.highlight_pad_x, y - text_height, block["value"])
 
     def render(self, c, x, y):
         initial_y = y
@@ -589,7 +590,7 @@ class Blockquote(Text):
         box_x      = x + self.margin_left - self.padding_x / 2
         box_top    = y - self.margin_top
         box_height = self.text_height + self.padding_y 
-        box_width  = self.page_end + self.padding_x
+        box_width  = self.page_end + self.padding_x*2
 
         c.setFillColor(HexColor(self.background))
         c.rect(box_x, box_top, box_width, -box_height, fill=1, stroke=0)
@@ -691,8 +692,7 @@ class Table_cell(Text):
     
     def word_wrap(self, page):
         self.content = super().word_wrap(page)
-        # print(self.content)
-        # print()
+
 
     def layout(self,page):
         fakepage = self.FakePage(page)
@@ -917,6 +917,10 @@ def render(c, objects, page):
 def main(parsed_file, output_path, style_path, font_path):
     
     parsed_json = LoadJson(style_path)
+
+    #------- Debug Json --------
+    #print(parsed_json)
+
     PAGE = parsed_json.get("page", {})
     page = Page(
         PAGE.get("minimum-page-height", 297),

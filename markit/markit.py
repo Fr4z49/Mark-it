@@ -11,7 +11,7 @@ jsonfile = ""
 
 try:
     from . import New_Parser
-except ImportError:
+except:
     import New_Parser
 
 def parse_arguments():
