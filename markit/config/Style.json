@@ -1,6 +1,6 @@
 {
     "settings": {
-        "default-output-path": "./Pdf"
+        "default-output-path": ""
     },
     "page": {
         "background": "#0d1117",
@@ -103,7 +103,7 @@
     "inline-code": {
         "color": "#f0f6fc",
         "background": "#2B3036",
-        "font-name": "Helvetica",
+        "font-name": "Helvetica-Bold",
         "font-size": 10,
         "padding-x": 3,
         "padding-y": 2.5
@@ -165,8 +165,7 @@
         "margin-left": 25,
         "margin-top": 25
     },
-    "custom-fonts": {
-    },
+    "custom-fonts": {},
     "highlighted-text": {
         "color": "#000000",
         "background": "#ffff00",

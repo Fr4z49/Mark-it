@@ -42,6 +42,7 @@ Mark-IT uses a syntax inspired by Markdown, but it is a distinct format. The dif
 ```
 Bold:      **this text is bold**
 Italic:    \\this text is italic\\
+Highlight: ==This text is Highlighted==
 Strikethrough: _-this text is crossed out-_
 Underline: __this text is crossed out__
 Inline code:   `this is inline code`
@@ -52,18 +53,29 @@ Inline code:   `this is inline code`
 ### Special Blockquotes
 
 ```
->n This is a Note
->t This is a Tip
->i This is Important
->w This is a Warning
->c This is a Caution
+> Normal blockquote (default gray)
+>n This is a Note (default Blue)
+>t This is a Tip (default Green)
+>i This is Important (default purple)
+>w This is a Warning (default yellow)
+>c This is a Caution  (default Red)
 ```
+
+> Colors can be changed in the `Style.json`
 
 ### Images
 
 ```
 !(image_path)[size]
 ```
+
+### Links:
+
+```
+(Link text)^https://www.google.com/
+```
+
+
 
 ### Tables
 
@@ -131,8 +143,9 @@ On Linux you can also run it directly:
 | Flag | Description |
 | :--- | :---------- |
 | `-o output` | Output file path (defaults to input filename with `.pdf` extension) |
+| `-n name` | Output Name of the file (defaults to input filename, you shouldn't need to touch this)|
 | `-s style` | Path to a custom `style.json` file |
-| `-r` | Reset configuration to defaults (AUR only) |
+| `-r` | Reset configuration to defaults (AUR only) (deprecated) |
 
 ---
 
@@ -146,6 +159,9 @@ Mark-IT is configured via `style.json`. Depending on your installation:
 | Portable | `Mark-it/markit/config/` |
 
 Options include margins, colors, font sizes, and custom font imports. The default config file is well-commented and self-explanatory.
+
+- **default output path**: 
+If left blank it defaults to input path, otherwise you can set an absolute path (mostly used when markit is installed with aur) or a relative path leading to a directory two folders above the main script (useful when using markit in a portable way). 
 
 ---
 
