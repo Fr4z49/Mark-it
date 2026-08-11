@@ -75,6 +75,8 @@ class Text:
         self.code_color            = inline.get("color", "#f0f6fc")
         self.code_bg_pad_x         = inline.get("padding-x", 2)
         self.code_bg_pad_y         = inline.get("padding-y", 2)
+        self.temp_font_name = None
+        self.temp_font_size = None
 
         highlight = parsed_json.get("highlighted-text")
 
@@ -270,6 +272,30 @@ class Text:
             )
             c.setFillColor(HexColor(self.highlight_color))
             c.drawString(x + self.highlight_pad_x, y - text_height, block["value"])
+        
+        elif block["type"] == "color": #cioè il color inline
+            c.setFont(self.font_name, self.font_size)
+            c.setFillColor(f"#{block["color"]}")
+            c.drawString(x,y-self.font_height,block["value"])
+
+        elif block["type"] == "style": #cioè la prop generale
+            modifier = block["property"][0].upper()
+            value = block["property"][1:]
+            temp_font_height = None
+
+            if value.isdigit():
+                self.temp_font_size = int(value)
+                self.temp_font_name = self.font_name
+                c.setFont(self.font_name, self.temp_font_size)
+                get_font_height(self.font_name,self.temp_font_size)
+
+            else:
+                self.temp_font_name = value
+                self.temp_font_size = self.font_size
+                c.setFont(self.temp_font_name, self.font_size)
+                get_font_height(self.temp_font_name,self.font_size)
+        
+            c.drawString(x,y-self.font_height,block["value"])
 
     def render(self, c, x, y):
         initial_y = y
@@ -302,6 +328,8 @@ class Text:
                     line_x += stringWidth(block["value"], self.font_name, self.font_size) + self.highlight_pad_x * 2
                 elif block["type"] == "bold":
                     line_x += stringWidth(block["value"], self.bold_font_name  , self.font_size)
+                elif block["type"] == "style":
+                    line_x += stringWidth(block["value"], self.temp_font_name  , self.temp_font_size)
                 else:
                     line_x += stringWidth(block["value"], self.font_name, self.font_size)
 

@@ -25,6 +25,8 @@ def parse_inline(line, block_type):
         r"|"
         r"(?P<link>\((?P<l_text>[^)]+)\)\^(?P<l_url>https?://[^\s\)]+))"
         r"|"
+        r"(?P<i_style>\((?P<text>[^)]+)\)(?P<type>[$#])(?P<prop>[^\s$#]+))"
+        r"|"
         r"(?P<E_bold>\\\*\*)"
         r"|"
         r"(?P<E_underline>\\\_\_)"
@@ -69,6 +71,12 @@ def parse_inline(line, block_type):
         
         elif m.group("l_url"):
             result.append({'type': 'link', 'path':m.group("l_url"), 'value':m.group("l_text")})
+        
+        elif m.group("i_style"): #inline style
+            if m.group("type") == "#":
+                result.append({'type': 'color', 'value':m.group("text"), 'color':m.group("prop")})
+            elif m.group("type") == "$":
+                result.append({'type': 'style', 'value':m.group("text"), 'property':m.group("prop")})
         
         elif m.group("E_bold"):
             result.append({'type': 'text', 'value':"**"})
