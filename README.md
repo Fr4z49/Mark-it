@@ -1,4 +1,4 @@
-# Mark-IT ver. 0.2.4
+# Mark-IT ver. 0.2.5
 
 > A Markdown-like markup format and CLI tool for fast note-taking with direct PDF export.
 
