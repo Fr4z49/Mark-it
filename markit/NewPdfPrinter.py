@@ -545,7 +545,7 @@ class Header(Text):
 
 
 class Multiline_Code(Text):
-    def __init__(self, content, parsed_json):
+    def __init__(self, content, indent,parsed_json):
         s = parsed_json.get("multiline-code", {})
         font_name    = s.get("font-name", "Helvetica")
         font_size    = s.get("font-size", 13)
@@ -556,8 +556,10 @@ class Multiline_Code(Text):
         self.background   = s.get("background", "#151b23")
         self.padding_x    = s.get("padding-x", 15)
         self.padding_y    = s.get("padding-y", 20)
-        self.margin_left  = s.get("margin-left", 30) * px
-        self.margin_right = s.get("margin-right", 0) * px
+        self.margin_right = s.get("margin-right", 0) * px 
+        self.indent_width  = s.get("indent-width", 40) * px
+        self.indent = indent
+        self.margin_left  = (s.get("margin-left", 30) * px) + (self.indent*self.indent_width)
 
     def layout(self, page):
         super().layout(page)
@@ -572,14 +574,14 @@ class Multiline_Code(Text):
         box_width  = self.page_end + self.padding_x 
         radius = 7*px
         c.setFillColor(HexColor(self.background))
-        c.roundRect(box_x, box_top, box_width, -box_height,radius, fill=1, stroke=0)
+        c.roundRect(box_x , box_top, box_width, -box_height,radius, fill=1, stroke=0)
 
-        super().render(c, x + self.margin_left + (self.padding_x / 2), y - self.margin_top - self.padding_y / 2)
+        super().render(c, x + self.margin_left  + (self.padding_x / 2), y - self.margin_top - self.padding_y / 2)
         return self.total_height
 
 
 class Blockquote(Text):
-    def __init__(self, content, special, parsed_json):
+    def __init__(self, content, special,indent, parsed_json):
         s = parsed_json.get("quote", {})
         font_name    = s.get("font-name", "Helvetica")
         font_size    = s.get("font-size", 14)
@@ -599,8 +601,11 @@ class Blockquote(Text):
         self.margin_top   = s.get("margin-top", 15) * px
         self.padding_x    = s.get("padding-x", 15)
         self.padding_y    = s.get("padding-y", 15)
-        self.margin_left  = s.get("margin-left", 30) * px
+        self.indent_width  = s.get("indent-width", 40) * px
+        self.margin_left  = (s.get("margin-left", 30) * px) + indent * self.indent_width
         self.margin_right = s.get("margin-right", 15) * px
+        
+    
     
     def map_special(self, special):
         return {
@@ -897,9 +902,9 @@ def blocks_to_objects(parsed, parsed_json):
         if element["type"] == "Paragraph":
             objects.append(Paragraph(element["content"], parsed_json))
         elif element["type"] == "Multiline_code":
-            objects.append(Multiline_Code(element["content"], parsed_json))
+            objects.append(Multiline_Code(element["content"],element["indent"], parsed_json))
         elif element["type"] == "Blockquote":
-            objects.append(Blockquote(element["content"], element["special"], parsed_json))
+            objects.append(Blockquote(element["content"], element["special"],element["indent"], parsed_json))
         elif element["type"] == "list":
             objects.append(List(element["content"], parsed_json))
         elif element["type"] == "table":

@@ -118,10 +118,23 @@ def parse(lines):
                 parsed_blocks.append(current_block)
                 current_block = None
             else:
+                # Rimuove dall'inizio della riga fino a 'indent' tabulazioni superflue,
+                # cioè quelle dovute solo all'indentazione del blocco e non al codice stesso
+                block_indent = current_block['indent']
+                content_line = raw_line
+                removed = 0
+                while removed < block_indent and content_line.startswith("\t"):
+                    content_line = content_line[1:]
+                    removed += 1
+
+                # Riconverte eventuali tabulazioni residue (indentazione interna
+                # al codice, es. un if annidato) in 4 spazi, come nel comportamento originale
+                content_line = content_line.replace("\t", "    ")
+
                 # Se il blocco non è vuoto, inserisce il blocco newline prima della nuova linea
                 if current_block['content']:
                     current_block['content'].append({'type': 'newline', 'value': '\n'})
-                current_block['content'].append({'type': 'text', 'value': line})
+                current_block['content'].append({'type': 'text', 'value': content_line})
             continue
 
         # 2. Linea Vuota (Separatore di blocchi)
@@ -140,7 +153,14 @@ def parse(lines):
         if stripped.startswith("```"):
             if current_block:
                 parsed_blocks.append(current_block)
-            current_block = {'type': 'Multiline_code', 'content': []}
+            if line.startswith("    "):
+                line = line.replace("    ","\t")
+
+            indentmatch = re.match(r"^(\t*)", raw_line)
+            indent = len(indentmatch.group())
+            #print(indent)
+
+            current_block = {'type': 'Multiline_code','indent': indent, 'content': []}
         
         elif stripped.startswith("#"):
             if current_block:
@@ -205,6 +225,11 @@ def parse(lines):
             if current_block:
                 parsed_blocks.append(current_block)
             
+            if line.startswith("    "):
+                line = line.replace("    ","\t")
+
+            indentmatch = re.match(r"^(\t*)", raw_line)
+            indent = len(indentmatch.group())
             content = re.match(r'^>([n|t|i|w|c])?\s?(.*)', stripped)
             
             # Se c'è un tipo speciale ...
@@ -218,6 +243,7 @@ def parse(lines):
             current_block = {
                 'type': 'Blockquote',
                 'special': special,
+                'indent': indent,
                 'content': parse_inline(clean_content, "blockquote")
             }
 
