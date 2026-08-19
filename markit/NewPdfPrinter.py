@@ -119,8 +119,10 @@ class Text:
 
         self.lines = merged_lines
         
-    def word_wrap(self, page):
-        if self.avail_width == 0:
+    def word_wrap(self, page, forced_width=None):
+        if forced_width is not None:
+            self.avail_width = forced_width
+        elif self.avail_width == 0:
             self.avail_width = page.content_width - self.margin_left - self.margin_right
         else:
             self.avail_width = 60
@@ -145,7 +147,7 @@ class Text:
                 try:
                     seg_width = stringWidth(text, self.bold_font_name, self.font_size)
                 except KeyError:
-                    seg_width = stringWidth(text, self.font_name , self.font_size)
+                    seg_width = stringWidth(text, self.font_name, self.font_size)
             else:
                 seg_width = stringWidth(text, self.font_name, self.font_size)
 
@@ -392,6 +394,7 @@ class List:
                 continue
 
             item.margin_left += self.margin_left + indent * self.indent_width
+            item.margin_right = self.margin_right 
             self.items.append(item)
 
         self.total_height = 0
@@ -699,180 +702,169 @@ class Hr:
         c.setDash()
         return self.used_y
 
-class Table_cell(Text):
-    def __init__(self,content, parsed_json):
-        self.style = parsed_json["table-cell"]
-        font_name = self.font_name = self.style.get("font-name", "Helvetica")
-        font_size = self.font_size = self.style.get("font-size", 10)
-        line_spacing = self.style.get("line-spacing", 1.2)
-        super().__init__(content,font_name,font_size,line_spacing,parsed_json)
-        
-        self.padding_x = self.style.get("padding-x",15)
-        self.padding_y = self.style.get("padding-y",15)
-        self.color = self.style.get("color","#FFFFFF")
-        self.background_color = self.style.get("background-color","#000000")
-        self.border_color = self.style.get("border-color","#ffffff")
-        self.border = self.style.get("border-thickness") * px
-        self.vertical_alignment = self.style.get("vertical-alignment","center")
-        self.horizontal_alignment = self.style.get("horizontal-alignment","left")
-        self.cell_size = self.style.get("cell-size","min")
+class Cell(Text):
+    def __init__(self, content, parsed_json):
+        s = parsed_json.get("table", {})
+        font_name    = s.get("font-name", "Helvetica")
+        font_size    = s.get("font-size", 13)
+        line_spacing = s.get("line-spacing", 1.2)
+        super().__init__(content, font_name, font_size, line_spacing, parsed_json)
+        self.color = s.get("color", "#e6edf3")
 
-        self.content = content
-        self.cell_height = 0
-        self.cell_width = 0
-        self.texts = []
-    
-    class FakePage:
-        def __init__(self,page):
-            self.content_width = page.content_width
-    
-    def word_wrap(self, page):
-        self.content = super().word_wrap(page)
+    def natural_width(self):
+        """Larghezza del contenuto se stesse su un'unica riga (nessun wrap)."""
+        width = 0
+        for block in self.content:
+            if block["type"] == "code":
+                width += stringWidth(block["value"], self.code_font_name, self.code_font_size)
+            elif block["type"] == "bold":
+                try:
+                    width += stringWidth(block["value"], self.bold_font_name, self.font_size)
+                except KeyError:
+                    width += stringWidth(block["value"], self.font_name, self.font_size)
+            else:
+                width += stringWidth(block["value"], self.font_name, self.font_size)
+        return width
 
+    def layout(self, page, col_width):
+        if not self.bold_font_name:
+            self.bold_font_name = self.font_name if self.font_name.endswith("-Bold") else self.font_name + "-Bold"
+        if not self.oblique_font_name:
+            self.oblique_font_name = self.font_name if self.font_name.endswith("-Oblique") else self.font_name + "-Oblique"
 
-    def layout(self,page):
-        fakepage = self.FakePage(page)
-        fakepage.content_width = page.content_width
-
-        self.word_wrap(fakepage)
-        self.cell_height = (self.font_height * len(self.content)) + 2*self.padding_y
-
-        line_widths = []
-        for row in self.content:
-            line_width = sum(
-                stringWidth(
-                    item['value'],
-                    self.bold_font_name if item['type'] == 'bold' and self.bold_font_name else self.font_name,
-                    self.font_size
-                )
-                for item in row
-            )
-            line_widths.append(line_width)
-
-        self.cell_width = max(line_widths) + 2*self.padding_x
-
-        return self.cell_height
-    
-    def render(self,c,x,y):
-        
-        c.setStrokeColor(HexColor(self.border_color))
-        c.setFillColor(HexColor(self.background_color))
-        c.setLineWidth(self.border)
-        c.rect(x,y-self.cell_height,self.cell_width,self.cell_height, stroke = 1 if self.border>0 else 0, fill=1)
-
-        # --- allineamento verticale (come prima) ---
-        text_height = self.font_height * len(self.content)
-        extra_space = max(0, self.cell_height - text_height - 2*self.padding_y)
-
-        if self.vertical_alignment == "top":
-            y_offset = self.padding_y
-        elif self.vertical_alignment == "bottom":
-            y_offset = self.padding_y + extra_space
-        else:  # center
-            y_offset = self.padding_y + extra_space / 2
-
-        # --- allineamento orizzontale: larghezza della riga più lunga, non la somma di tutte le parole ---
-        line_widths = [
-            stringWidth(" ".join(item['value'] for item in row), self.font_name, self.font_size)
-            for row in self.content
-        ]
-        text_width = max(line_widths) if line_widths else 0
-
-        if self.horizontal_alignment == "center":
-            x_offset = (self.cell_width - text_width) / 2
-        elif self.horizontal_alignment == "right":
-            x_offset = self.cell_width - text_width - self.padding_x
-        else:  # left (default)
-            x_offset = self.padding_x
-
-        super().render(c, x+x_offset, y-y_offset)
-
-        return self.cell_width, self.cell_height
-        
-
-    
-
-class Table_row:
-    def __init__(self,content,parsed_json):
-        self.cells = self.create_cells_obj(content,parsed_json)
-    
-    def create_cells_obj(self,content, parsed_json):
-        cell_objs = []
-        for cell in content:
-            cell_objs.append(Table_cell(cell, parsed_json))
-        return cell_objs
-    
-    def layout(self,page):
-        max_cell_height = 0
-        for cell in self.cells:
-            cell_height = cell.layout(page)
-            max_cell_height = max(max_cell_height, cell_height)
-        for cell in self.cells:
-            cell.cell_height = max_cell_height
-        return max_cell_height
-    
-    def render(self,c,x,y):
-        x_shift = 0
-        y_shift = 0
-        for cell in self.cells:
-            delta_x , delta_y = cell.render(c,x+x_shift,y-y_shift) 
-            x_shift += delta_x
-
-        y_shift = delta_y
-
-        return  y_shift #Boom! esplode tutto in una sola riga di codice
-
-class Table:
-    def __init__(self,content,parsed_json):
-        self.style = parsed_json["table"]
-        self.margin_top = self.style.get("margin-top", 25)
-        self.margin_left = self.style.get("margin-left",0)
-        self.maring_right = self.style.get("margin-right",0)
-        self.rows = self.create_rows_objs(content,parsed_json)
-        self.total_height = 0
-
-    def layout(self,page):
-        self.total_height = 0
-        # 1° passaggio: layout di ogni riga (calcola cell_width/cell_height "intrinseci"
-        #               e già sincronizza le altezze all'interno della riga)
-        for row in self.rows:
-            self.total_height += row.layout(page)
-
-        # 2° passaggio: sincronizza le larghezze per colonna, su TUTTE le righe
-        self.normalize_column_widths()
-
+        self.content_width = col_width
+        self.word_wrap(page, forced_width=col_width)
+        self.text_height = self.line_height * len(self.lines)
+        self.total_height = self.text_height
         return self.total_height
 
-    def normalize_column_widths(self):
-        if not self.rows:
-            return
+class Table(Text):
 
-        num_columns = max(len(row.cells) for row in self.rows)
+    def __init__(self, content, parsed_json):
+        s = parsed_json.get("table", {})
+        font_name    = s.get("font-name", "Helvetica")
+        font_size    = s.get("font-size", 13)
+        line_spacing = s.get("line-spacing", 1.2)
+        super().__init__(content, font_name, font_size, line_spacing, parsed_json)
 
-        # calcola la larghezza massima per ogni colonna
-        column_widths = [0] * num_columns
-        for row in self.rows:
-            for col_idx, cell in enumerate(row.cells):
-                column_widths[col_idx] = max(column_widths[col_idx], cell.cell_width)
+        self.parsed_json = parsed_json
+        self.margin_top   = s.get("margin-top", 20) * px
+        self.margin_left  = s.get("margin-left", 30) * px
+        self.margin_right = s.get("margin-right", 0) * px
+        self.cell_padding_x = s.get("padding-x", 8)
+        self.cell_padding_y = s.get("padding-y", 6)
+        self.border_width  = s.get("border-thickness", 1)
+        self.border_color  = s.get("border-color", "#3d444d")
+        self.cell_bg_color = s.get("background-color", "#151b23")
+        self.cell_txt_color = s.get("color", "#e6edf3")
 
-        # riapplica la larghezza massima a tutte le celle della stessa colonna
-        for row in self.rows:
-            for col_idx, cell in enumerate(row.cells):
-                cell.cell_width = column_widths[col_idx]
-
-    def render(self,c,x,y):
-        y_shift = 0
-        for row in self.rows:
-            y_shift = row.render(c,x+self.margin_left,y- y_shift- self.margin_top)
-        return self.total_height + self.margin_top
-
-    def create_rows_objs(self,content,parsed_json):
-        rows_objs = []
+        # costruisco la griglia di oggetti Cell
+        self.grid = []
         for row in content:
-            rows_objs.append(Table_row(row,parsed_json))
-        
-        return rows_objs
+            cell_row = []
+            for cell_content in row:
+                cell_row.append(Cell(cell_content, parsed_json))
+            self.grid.append(cell_row)
 
+        self.col_widths = []
+        self.row_heights = []
+        self.total_height = 0
+
+    def layout(self, page):
+        if not self.grid:
+            self.total_height = self.margin_top
+            return self.total_height
+
+        n_cols = max(len(row) for row in self.grid)
+        avail_width = page.content_width - self.margin_left - self.margin_right
+
+        # --- Passata 1: larghezza naturale per colonna ---
+        natural_col_widths = [0] * n_cols
+        for row in self.grid:
+            for i, cell in enumerate(row):
+                w = cell.natural_width() + self.cell_padding_x * 2
+                if w > natural_col_widths[i]:
+                    natural_col_widths[i] = w
+
+        total_natural = sum(natural_col_widths)
+
+        if total_natural <= avail_width or total_natural == 0:
+            # ci sta tutto comodamente, nessun clamp necessario
+            self.col_widths = natural_col_widths
+        else:
+            # cap per colonna: una colonna non può mai superare
+            # una quota massima "equa" più eventuale spazio extra
+            # lasciato dalle colonne più strette della media
+            min_col_width = 50 * px  # larghezza minima leggibile, es. per una parola
+            max_col_width = avail_width / n_cols * 1.8  # colonna "larga" ma non infinita
+
+            capped = [min(w, max_col_width) for w in natural_col_widths]
+            capped = [max(w, min_col_width) for w in capped]
+
+            total_capped = sum(capped)
+
+            if total_capped <= avail_width:
+                # lo spazio libero rimasto va redistribuito alle colonne
+                # che erano state effettivamente cappate (quelle "grosse"),
+                # proporzionalmente al loro sforamento originale
+                extra = avail_width - total_capped
+                overflow_cols = [i for i, w in enumerate(natural_col_widths) if w > max_col_width]
+                if overflow_cols:
+                    total_overflow = sum(natural_col_widths[i] - max_col_width for i in overflow_cols)
+                    for i in overflow_cols:
+                        share = (natural_col_widths[i] - max_col_width) / total_overflow
+                        capped[i] += extra * share
+                self.col_widths = capped
+            else:
+                # anche col cap non ci sta: scala tutto proporzionalmente
+                scale = avail_width / total_capped
+                self.col_widths = [w * scale for w in capped]
+
+        # --- Passata 2: wrap reale sulla larghezza definitiva ---
+        self.row_heights = []
+        for row in self.grid:
+            row_height = 0
+            for i, cell in enumerate(row):
+                col_w = self.col_widths[i] - self.cell_padding_x * 2
+                col_w = max(col_w, 10)  # mai negativo/zero, altrimenti word_wrap va in loop
+                cell_h = cell.layout(page, col_w)
+                cell_h += self.cell_padding_y * 2
+                if cell_h > row_height:
+                    row_height = cell_h
+            self.row_heights.append(row_height)
+
+        self.max_row_width = sum(self.col_widths)
+        self.total_height = sum(self.row_heights) + self.margin_top
+        return self.total_height
+
+    def render(self, c, x, y):
+        start_y = y
+        y -= self.margin_top
+        table_x = x + self.margin_left
+
+        for row, row_height in zip(self.grid, self.row_heights):
+            cell_x = table_x
+            for i, cell in enumerate(row):
+                col_w = self.col_widths[i]
+
+                # sfondo cella
+                c.setFillColor(HexColor(self.cell_bg_color))
+                c.rect(cell_x, y - row_height, col_w, row_height, fill=1, stroke=0)
+
+                # bordo cella
+                c.setStrokeColor(HexColor(self.border_color))
+                c.setLineWidth(self.border_width)
+                c.rect(cell_x, y - row_height, col_w, row_height, fill=0, stroke=1)
+
+                # testo della cella (riusa Text.render per bold/code/link/ecc.)
+                cell.color = self.cell_txt_color
+                cell.render(c, cell_x + self.cell_padding_x, y - self.cell_padding_y)
+
+                cell_x += col_w
+
+            y -= row_height
+
+        return start_y - y
 
 # =========================
 # PAGE

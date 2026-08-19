@@ -33,6 +33,8 @@ def parse_inline(line, block_type):
         r"|"
         r"(?P<E_code>\\`)"
         r"|"
+        r"(?P<E_Bcode>\\`\\`\\`)"
+        r"|"
         r"(?P<E_quote>\\>)"
         r"|"
         r"(?P<E_header>\\#)"
@@ -85,6 +87,8 @@ def parse_inline(line, block_type):
             result.append({'type': 'text', 'value':"__"})
         elif m.group("E_code"):
             result.append({'type': 'text', 'value':"`"})
+        elif m.group("E_Bcode"):
+            result.append({'type': 'text', 'value':"```"})
         elif m.group("E_quote"):
             result.append({'type': 'text', 'value':">"})
 
