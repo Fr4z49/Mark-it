@@ -113,7 +113,8 @@ def parse(lines):
         # 1. Gestione Blocco Multiline Code attivo
         line = line.replace("\t", "    ")
 
-        raw_line = line.replace("    ", "\t")
+        raw_line = re.sub(r' {2,}', '\t', line) # ora è piu flessibile
+        
         if current_block and current_block['type'] == 'Multiline_code':
             if line.lstrip().startswith("```"):
                 # Rimuove l'ultimo newline superfluo prima di chiudere
