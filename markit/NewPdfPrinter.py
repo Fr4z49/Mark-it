@@ -195,20 +195,28 @@ class Text:
             c.setFillColor(HexColor(self.color))
             
             try:
-                
+                # nel caso ci fosse il font italico, allora uso quello
                 c.setFont(self.oblique_font_name, self.font_size)
-            except KeyError:
-                c.setFont("Helvetica-Oblique", self.font_size)
+                c.drawString(x, y - self.font_height, block["value"])
                 
+            except KeyError:
+                # altrimenti applico una trasformazione per renderlo obliquo senza fare fallback ad un font base
+
+                c.setFont(self.font_name, self.font_size)
+                c.saveState()
+                c.transform(1, 0, 0.21, 1, 0, 0) #Rendo il testo obliquo
+                c.drawString(x - 0.21 * (y - self.font_height),y - self.font_height,block["value"])
+                c.restoreState() #ritorno allo stato salvato
+
                 if self.font_name.endswith("-Bold"):
                     print(f"\033[31mUsing more than one formatting type at the same time is currently unsupported.\033[0m")
                     self.oblique_font_name= self.oblique_font_name.replace("-Bold","")
                     print(f"\033[33mDefaulting to {self.oblique_font_name}.\033[0m")
                 else:
-                    print(f"\033[31m'{self.font_name}' font Italic variant is missing, defaulting to 'Helvetica-Oblique'.\033[0m")
+                    #print(f"\033[31m'{self.font_name}' font Italic variant is missing, defaulting to 'Helvetica-Oblique'.\033[0m")
+                    print(f"\033[31m'{self.font_name}' font Italic variant is missing, using fallback method.\033[0m")
                     print(f"\033[33mPlease import {self.font_name}-Oblique inside the 'Style.json' currently in use.\033[0m")
-            c.drawString(x, y - self.font_height, block["value"])
-
+            
         elif block["type"] == "strikethru":
             c.setFillColor(HexColor(self.color))
             c.setFont(self.font_name, self.font_size)
