@@ -180,16 +180,33 @@ class Text:
         return self.lines
 
     def render_formatted(self, c, x, y, block):
+
         if block["type"] == "bold":
             c.setFillColor(HexColor(self.color))
             try:
                 
                 c.setFont(self.bold_font_name, self.font_size)
+                c.drawString(x, y - self.font_height, block["value"])
+                
             except KeyError:
                 c.setFont("Helvetica-Bold", self.font_size)
-                print(f"\033[31m'{self.font_name}' Bold variant is missing, defaulting to 'Helvetica-Bold'.\033[0m")
+                #print(f"\033[31m'{self.font_name}' Bold variant is missing, defaulting to 'Helvetica-Bold'.\033[0m")
+                print(f"\033[31m'{self.font_name}' Bold variant is missing, Using fallback method.\033[0m")
                 print(f"\033[33mPlease import {self.font_name}-Bold inside the 'Style.json' currently in use.\033[0m")
-            c.drawString(x, y - self.font_height, block["value"])
+
+
+                c.saveState()
+                c.setStrokeColor(HexColor(self.color))
+                c.setLineWidth(0.6)
+
+                text = c.beginText(x, y - self.font_height)
+                text.setFont(self.font_name, self.font_size)
+                text.setCharSpace(0.7)
+                text.setTextRenderMode(2)
+                text.textOut(block["value"])
+                c.drawText(text)
+                c.restoreState()
+            
         
         elif block["type"] == "italic":
             c.setFillColor(HexColor(self.color))
