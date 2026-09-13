@@ -249,7 +249,7 @@ class Text:
             c.setFont(self.font_name, self.font_size)
             c.drawString(x, y - self.font_height, block["value"])
             text_width = stringWidth(block["value"], self.font_name, self.font_size)
-            underline_y = y - self.font_size 
+            underline_y = y - self.font_height - 2
             c.setStrokeColor(HexColor(self.color))
             c.setLineWidth(1)
             c.line(x, underline_y, x + text_width, underline_y)
@@ -271,19 +271,22 @@ class Text:
             text_width = stringWidth(block["value"], self.code_font_name, self.code_font_size)
             code_height = get_font_height(self.code_font_name, self.code_font_size)
             baseline_y = y - self.font_height  # baseline allineata al testo circostante, non al font del code
+            face = pdfmetrics.getFont(self.code_font_name).face
+            ascender = face.ascent / 1000 * self.code_font_size
+            descender = face.descent / 1000 * self.code_font_size
 
             c.setFillColor(HexColor(self.code_background_color))
             radius = 5*px
             c.roundRect(
                 x,
-                baseline_y - self.code_bg_pad_y/2,
+                baseline_y + descender*0.9,
                 text_width + self.code_bg_pad_x * 2,
-                code_height + self.code_bg_pad_y,
+                code_height+(descender/2)+ self.code_bg_pad_y,
                 radius,
                 stroke=0, fill=1
             )
             c.setFillColor(HexColor(self.code_color))
-            c.drawString(x + self.code_bg_pad_x, baseline_y+self.code_bg_pad_y/2, block["value"])
+            c.drawString(x + self.code_bg_pad_x, baseline_y, block["value"])
         
         elif block["type"] == "highlight":
             c.setFont(self.font_name, self.font_size)
