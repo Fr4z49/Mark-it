@@ -576,11 +576,13 @@ class Header(Text):
 
 
 class Multiline_Code(Text):
-    def __init__(self, content, indent,parsed_json):
+    def __init__(self, content,indent,filename,parsed_json):
         s = parsed_json.get("multiline-code", {})
         font_name    = s.get("font-name", "Helvetica")
         font_size    = s.get("font-size", 13)
         line_spacing = s.get("line-spacing", 1.2)
+        self.fileName = filename
+        self.indent = indent
         super().__init__(content, font_name, font_size, line_spacing, parsed_json)
         self.color        = s.get("color", "#f0f6fc")
         self.margin_top   = s.get("margin-top", 25) * px
@@ -589,25 +591,52 @@ class Multiline_Code(Text):
         self.padding_y    = s.get("padding-y", 20)
         self.margin_right = s.get("margin-right", 0) * px 
         self.indent_width  = s.get("indent-width", 40) * px
-        self.indent = indent
         self.margin_left  = (s.get("margin-left", 30) * px) + (self.indent*self.indent_width)
+        self.title_color = s.get("title-color", "#ff0000")
+        self.title_backgound = s.get("title-background", "#ff0000")
+        self.title_font_name = s.get("title-font-name", "#101010")
+        self.title_font_size = s.get("title-font-size", 8)
+        
 
     def layout(self, page):
         super().layout(page)
         box_height = self.text_height + self.padding_y
-        self.total_height = box_height + self.margin_top
+        TitleTextHeight = get_font_height(self.title_font_name,self.title_font_size)
+        TitlePaddingY = 3*px
+        TitleHeight = TitleTextHeight + TitlePaddingY*2
+        
+        self.total_height = box_height + self.margin_top + TitleHeight
         return self.total_height
 
     def render(self, c, x, y):
         box_x      = x + self.margin_left - self.padding_x / 2
-        box_top    = y - self.margin_top
-        box_height = self.text_height + self.padding_y 
         box_width  = self.page_end + self.padding_x 
+        Title_top    = y - self.margin_top
+        TitleHeight = 0
+        # Filename box
+        if self.fileName:
+            
+            TitleTextHeight = get_font_height(self.title_font_name,self.title_font_size)
+            TitlePaddingY = 3*px
+            TitleHeight = TitleTextHeight + TitlePaddingY*2
+
+            c.setFillColor(HexColor(self.title_backgound))
+            c.rect(box_x , Title_top, box_width, -TitleHeight, fill=1, stroke=0)
+            c.setFillColor(HexColor(self.title_color))
+            c.setFont(self.title_font_name, self.title_font_size)
+            c.drawString(box_x + 5*px, Title_top - TitlePaddingY - TitleTextHeight+1,self.fileName)
+            c.setFillColor(HexColor(self.background))
+            c.rect(box_x , Title_top-TitleHeight, box_width, -15*px, fill=1, stroke=0)
+
+        # Multiline code box & text
+        
+        box_top    = Title_top - TitleHeight
+        box_height = self.text_height + self.padding_y 
         radius = 7*px
         c.setFillColor(HexColor(self.background))
         c.roundRect(box_x , box_top, box_width, -box_height,radius, fill=1, stroke=0)
 
-        super().render(c, x + self.margin_left  + (self.padding_x / 2), y - self.margin_top - self.padding_y / 2)
+        super().render(c, x + self.margin_left  + (self.padding_x / 2), y - self.margin_top - TitleHeight - self.padding_y / 2)
         return self.total_height
 
 
@@ -922,7 +951,7 @@ def blocks_to_objects(parsed, parsed_json):
         if element["type"] == "Paragraph":
             objects.append(Paragraph(element["content"], parsed_json))
         elif element["type"] == "Multiline_code":
-            objects.append(Multiline_Code(element["content"],element["indent"], parsed_json))
+            objects.append(Multiline_Code(element["content"],element["indent"],element["Filename"], parsed_json))
         elif element["type"] == "Blockquote":
             objects.append(Blockquote(element["content"], element["special"],element["indent"], parsed_json))
         elif element["type"] == "list":

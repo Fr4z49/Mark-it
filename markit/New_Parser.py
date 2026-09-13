@@ -118,8 +118,10 @@ def parse(lines):
         if current_block and current_block['type'] == 'Multiline_code':
             if line.lstrip().startswith("```"):
                 # Rimuove l'ultimo newline superfluo prima di chiudere
+                
                 if current_block['content'] and current_block['content'][-1]['type'] == 'newline':
                     current_block['content'].pop()
+                    
                 parsed_blocks.append(current_block)
                 current_block = None
             else:
@@ -160,12 +162,11 @@ def parse(lines):
                 parsed_blocks.append(current_block)
             if line.startswith("    "):
                 line = line.replace("    ","\t")
-
             indentmatch = re.match(r"^(\t*)", raw_line)
             indent = len(indentmatch.group())
-            #print(indent)
+            filename = line.lstrip("`")
 
-            current_block = {'type': 'Multiline_code','indent': indent, 'content': []}
+            current_block = {'type': 'Multiline_code','Filename':filename, 'indent': indent, 'content': []}
         
         elif stripped.startswith("#"):
             if current_block:
@@ -340,7 +341,7 @@ def main(document,output_path,style_path,font_path):
         lines = file.read().split("\n")
 
     parsed = parse(lines)
-    #print(parsed)
+    print(parsed)
     NewPdfPrinter.main(parsed,output_path,style_path,font_path)
 
 if __name__ == "__main__":
