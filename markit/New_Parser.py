@@ -1,9 +1,15 @@
 import re
+import json
 
 try:
     from . import NewPdfPrinter
 except ImportError:
     import NewPdfPrinter
+
+try:
+    from . import Pygments_colors
+except ImportError:
+    import Pygments_colors
 
 def parse_inline(line, block_type):
     line = line.replace("\t", "   ")
@@ -141,7 +147,8 @@ def parse(lines):
                 # Se il blocco non è vuoto, inserisce il blocco newline prima della nuova linea
                 if current_block['content']:
                     current_block['content'].append({'type': 'newline', 'value': '\n'})
-                current_block['content'].append({'type': 'text', 'value': content_line})
+                #current_block['content'].append({'type': 'text', 'value': content_line})
+                current_block['content'].extend(Pygments_colors.main(content_line,current_block['Filename'],loadedjson["multiline-code"]["syntax-higlight-style"]))
             continue
 
         # 2. Linea Vuota (Separatore di blocchi)
@@ -337,11 +344,16 @@ def parse(lines):
 
 
 def main(document,output_path,style_path,font_path):
+    global loadedjson
     with open(document, "r", encoding="utf-8") as file:
         lines = file.read().split("\n")
+    
+    with open(style_path, "r") as f:
+        loadedjson = json.load(f)
+    
 
     parsed = parse(lines)
-    print(parsed)
+    #print(parsed)
     NewPdfPrinter.main(parsed,output_path,style_path,font_path)
 
 if __name__ == "__main__":

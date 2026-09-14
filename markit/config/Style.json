@@ -109,6 +109,7 @@
         "padding-y": 2.5
     },
     "multiline-code": {
+        "syntax-higlight-style": "github-dark",
         "color": "#f0f6fc",
         "background": "#151b23",
         "font-name": "Helvetica",
