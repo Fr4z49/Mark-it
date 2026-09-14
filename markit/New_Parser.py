@@ -171,7 +171,7 @@ def parse(lines):
                 line = line.replace("    ","\t")
             indentmatch = re.match(r"^(\t*)", raw_line)
             indent = len(indentmatch.group())
-            filename = line.lstrip("`")
+            filename = line.lstrip("\t`")
 
             current_block = {'type': 'Multiline_code','Filename':filename, 'indent': indent, 'content': []}
         
