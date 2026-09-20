@@ -11,6 +11,17 @@ try:
 except ImportError:
     import Pygments_colors
 
+def softTabLevelChecker(lines):
+
+    softTabLevel = 0
+    for line in lines:  # legge riga per riga, senza caricare tutto in memoria
+        if line.strip() and line.startswith(" "):
+            softTabLevel = len(line) - len(line.lstrip(" "))
+            break
+
+    return softTabLevel
+
+
 def parse_inline(line, block_type):
     line = line.replace("\t", "   ")
 
@@ -115,11 +126,14 @@ def parse(lines):
     parsed_blocks = []
     current_block = None
 
+    SoftTabsLVL = softTabLevelChecker(lines)
+    #print(SoftTabsLVL)
+
     for line in lines:
         # 1. Gestione Blocco Multiline Code attivo
         line = line.replace("\t", "    ")
-
-        raw_line = re.sub(r' {2,}', '\t', line) # ora è piu flessibile
+        Line_tabs = re.sub(r' {2,}', '\t', line)
+        raw_line = line #re.sub(r' {2,}', '\t', line) # ora è piu flessibile
         
         if current_block and current_block['type'] == 'Multiline_code':
             if line.lstrip().startswith("```"):
@@ -131,24 +145,24 @@ def parse(lines):
                 parsed_blocks.append(current_block)
                 current_block = None
             else:
-                # Rimuove dall'inizio della riga fino a 'indent' tabulazioni superflue,
-                # cioè quelle dovute solo all'indentazione del blocco e non al codice stesso
-                block_indent = current_block['indent']
-                content_line = raw_line
-                removed = 0
-                while removed < block_indent and content_line.startswith("\t"):
-                    content_line = content_line[1:]
-                    removed += 1
+                
+                if current_block["indent"] != 0:
+                    Final_line = raw_line[SoftTabsLVL:]
+                
+                else:
+                    Final_line = raw_line
+               
 
                 # Riconverte eventuali tabulazioni residue (indentazione interna
                 # al codice, es. un if annidato) in 4 spazi, come nel comportamento originale
-                content_line = content_line.replace("\t", "    ")
+                #content_line = content_line.replace("\t", "    ")
 
                 # Se il blocco non è vuoto, inserisce il blocco newline prima della nuova linea
                 if current_block['content']:
                     current_block['content'].append({'type': 'newline', 'value': '\n'})
                 #current_block['content'].append({'type': 'text', 'value': content_line})
-                current_block['content'].extend(Pygments_colors.main(content_line,current_block['Filename'],loadedjson["multiline-code"]["syntax-higlight-style"]))
+                #print(raw_line)
+                current_block['content'].extend(Pygments_colors.main(Final_line,current_block['Filename'],loadedjson["multiline-code"]["syntax-higlight-style"]))
             continue
 
         # 2. Linea Vuota (Separatore di blocchi)
@@ -160,7 +174,7 @@ def parse(lines):
 
         stripped = line.lstrip()
         img_match = re.fullmatch(r'!\((.*?)\)\[(\d+)\]', stripped)
-        list_match = re.match(r"^(\t*)(-|\[[ xX]?\])\s+(.*)", raw_line)
+        list_match = re.match(r"^(\t*)(-|\[[ xX]?\])\s+(.*)", Line_tabs)
         table_match = re.match(r'^\|(?:[^|]+\|)+$',stripped)
 
         # 3. Riconoscimento inizio Nuovi Blocchi
@@ -169,9 +183,9 @@ def parse(lines):
                 parsed_blocks.append(current_block)
             if line.startswith("    "):
                 line = line.replace("    ","\t")
-            indentmatch = re.match(r"^(\t*)", raw_line)
+            indentmatch = re.match(r"^(\t*)", Line_tabs)
             indent = len(indentmatch.group())
-            filename = line.lstrip("\t`")
+            filename = line.lstrip("\t` ")
 
             current_block = {'type': 'Multiline_code','Filename':filename, 'indent': indent, 'content': []}
         
@@ -241,7 +255,7 @@ def parse(lines):
             if line.startswith("    "):
                 line = line.replace("    ","\t")
 
-            indentmatch = re.match(r"^(\t*)", raw_line)
+            indentmatch = re.match(r"^(\t*)", Line_tabs)
             indent = len(indentmatch.group())
             content = re.match(r'^>([n|t|i|w|c])?\s?(.*)', stripped)
             
@@ -261,9 +275,9 @@ def parse(lines):
             }
 
         elif list_match:
-            if line.startswith("    "):
-                line = line.replace("    ","\t")
-            indent = len(list_match.group(1))
+
+            indentmatch = re.match(r"^(\t*)", Line_tabs)
+            indent = len(indentmatch.group())
             marker = list_match.group(2)
             clean_content = list_match.group(3)
 
